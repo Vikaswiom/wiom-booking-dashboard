@@ -87,32 +87,31 @@ for r in cohort_rows:
 print("Fetching language breakdown...")
 q2 = """SELECT EVENT_NAME,
   COALESCE(NULLIF(TRY_PARSE_JSON(PROPERTIES):"event_props.language"::STRING,''), 'unknown') as language,
+  CAST(TIMESTAMP AS DATE) as event_date,
   COUNT(DISTINCT USER_ID) as unique_users
 FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER
 WHERE EVENT_NAME IN ('App Installed','booking_homepage_loaded','serviceable_page_loaded',
 'unserviceable_page_loaded','how_does_it_work_clicked','how_to_get_started_clicked',
 'cost_today_clicked','pay_100_to_move_forward_clicked','booking_fee_captured','choose_different_location_clicked')
 AND TIMESTAMP >= '2026-01-26'
-GROUP BY EVENT_NAME, language ORDER BY EVENT_NAME, unique_users DESC"""
+GROUP BY EVENT_NAME, language, event_date ORDER BY event_date, EVENT_NAME"""
 _, lang_rows = run_query(q2)
-# Fix: merge unknown into hi/en. For booking_fee_captured, use pay_100 language ratio
 lang_data = []
 for r in lang_rows:
-    lang = r[1]
-    if lang not in ('hi', 'en'):
-        lang = 'hi'  # default unknown to Hindi (app defaults to Hindi)
-    lang_data.append({'e': r[0], 'l': lang, 'u': r[2]})
+    lang = r[1] if r[1] in ('hi', 'en') else 'hi'
+    lang_data.append({'e': r[0], 'l': lang, 'd': r[2][:10], 'u': r[3]})
 # Merge duplicates after normalization
 lang_merged = {}
 for r in lang_data:
-    key = (r['e'], r['l'])
+    key = (r['e'], r['l'], r['d'])
     lang_merged[key] = lang_merged.get(key, 0) + r['u']
-lang_data = [{'e': k[0], 'l': k[1], 'u': v} for k, v in lang_merged.items()]
+lang_data = [{'e': k[0], 'l': k[1], 'd': k[2], 'u': v} for k, v in lang_merged.items()]
 
 # For booking_fee_captured: override with pay_100 language (previous screen)
 print("Fetching booking_fee language from pay_100...")
 q2b = """SELECT
   COALESCE(NULLIF(TRY_PARSE_JSON(c2.PROPERTIES):"event_props.language"::STRING,''), 'hi') as lang,
+  CAST(c1.TIMESTAMP AS DATE) as event_date,
   COUNT(DISTINCT c1.USER_ID) as users
 FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER c1
 INNER JOIN PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER c2
@@ -120,13 +119,12 @@ INNER JOIN PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER c2
   AND c2.EVENT_NAME = 'pay_100_to_move_forward_clicked'
   AND c2.TIMESTAMP >= '2026-01-26'
 WHERE c1.EVENT_NAME = 'booking_fee_captured' AND c1.TIMESTAMP >= '2026-01-26'
-GROUP BY lang ORDER BY users DESC"""
+GROUP BY lang, event_date ORDER BY event_date"""
 _, fee_lang_rows = run_query(q2b)
-# Replace booking_fee_captured entries in lang_data
 lang_data = [r for r in lang_data if r['e'] != 'booking_fee_captured']
 for r in fee_lang_rows:
     lang = r[0] if r[0] in ('hi', 'en') else 'hi'
-    lang_data.append({'e': 'booking_fee_captured', 'l': lang, 'u': r[1]})
+    lang_data.append({'e': 'booking_fee_captured', 'l': lang, 'd': r[1][:10], 'u': r[2]})
 
 # =====================================================================
 # QUERY 3: Location change page + language (direct query)
@@ -135,12 +133,13 @@ print("Fetching location change breakdown...")
 q3 = """SELECT
   COALESCE(NULLIF(TRY_PARSE_JSON(PROPERTIES):"event_props.page_name"::STRING,''), 'unknown') as page,
   COALESCE(NULLIF(TRY_PARSE_JSON(PROPERTIES):"event_props.language"::STRING,''), 'hi') as language,
+  CAST(TIMESTAMP AS DATE) as event_date,
   COUNT(DISTINCT USER_ID) as unique_users
 FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER
 WHERE EVENT_NAME = 'choose_different_location_clicked' AND TIMESTAMP >= '2026-01-26'
-GROUP BY page, language ORDER BY unique_users DESC"""
+GROUP BY page, language, event_date ORDER BY event_date"""
 _, loc_rows = run_query(q3)
-loc_data = [{'p': r[0], 'l': r[1] if r[1] in ('hi','en') else 'hi', 'u': r[2]} for r in loc_rows]
+loc_data = [{'p': r[0], 'l': r[1] if r[1] in ('hi','en') else 'hi', 'd': r[2][:10], 'u': r[3]} for r in loc_rows]
 
 # =====================================================================
 # QUERY 4: Language change behavior - on which screen users change
@@ -149,19 +148,16 @@ print("Fetching language change behavior...")
 q4 = """SELECT
   COALESCE(NULLIF(TRY_PARSE_JSON(PROPERTIES):"event_props.page_name"::STRING,''), 'unknown') as page,
   COALESCE(NULLIF(TRY_PARSE_JSON(PROPERTIES):"event_props.language"::STRING,''), 'unknown') as to_lang,
+  CAST(TIMESTAMP AS DATE) as event_date,
   COUNT(*) as total_changes,
   COUNT(DISTINCT USER_ID) as unique_users
 FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER
 WHERE EVENT_NAME = 'language_changed' AND TIMESTAMP >= '2026-01-26'
-GROUP BY page, to_lang ORDER BY unique_users DESC"""
+GROUP BY page, to_lang, event_date ORDER BY event_date"""
 _, langchange_rows = run_query(q4)
-langchange_data = [{'p': r[0], 'l': r[1], 'c': r[2], 'u': r[3]} for r in langchange_rows]
+langchange_data = [{'p': r[0], 'l': r[1], 'd': r[2][:10], 'c': r[3], 'u': r[4]} for r in langchange_rows]
 # Filter out unknown and hamburger (not real pages)
 langchange_data = [r for r in langchange_data if r['p'] != 'unknown' and 'hamburger' not in r['p'].lower()]
-# Compute summary from filtered data
-langchange_summary = {}
-for r in langchange_data:
-    langchange_summary[r['l']] = langchange_summary.get(r['l'], 0) + r['u']
 
 # =====================================================================
 # QUERY 5: Distinct app versions
@@ -420,7 +416,6 @@ var CD = """ + json.dumps(cohort_data) + """;
 var LD = """ + json.dumps(lang_data) + """;
 var LOC = """ + json.dumps(loc_data) + """;
 var LC = """ + json.dumps(langchange_data) + """;
-var LCS = """ + json.dumps(langchange_summary) + """;
 var AV = """ + json.dumps(app_versions) + """;
 var VD = """ + json.dumps(version_data) + """;
 var MIND='""" + min_date + """', MAXD='""" + max_date + """';
@@ -440,7 +435,9 @@ function L(o){var b={paper_bgcolor:'#1e293b',plot_bgcolor:'#1e293b',font:{color:
 function fmt(n){return n.toLocaleString()}
 
 var at=0;
-function filt(){var f=document.getElementById('df').value,t=document.getElementById('dt').value;return CD.filter(function(r){return r.d>=f&&r.d<=t})}
+function dr(){return{f:document.getElementById('df').value,t:document.getElementById('dt').value}}
+function filt(){var d=dr();return CD.filter(function(r){return r.d>=d.f&&r.d<=d.t})}
+function filtArr(arr){var d=dr();return arr.filter(function(r){return r.d>=d.f&&r.d<=d.t})}
 function agg(fd){var s={};AK.forEach(function(k){s[k]=0});fd.forEach(function(r){AK.forEach(function(k){s[k]+=r[k]})});return s}
 function byWeek(fd){var m={};fd.forEach(function(r){var d=new Date(r.d),dy=d.getDay(),df=d.getDate()-dy+(dy===0?-6:1),mon=new Date(d.setDate(df)),wk=mon.toISOString().slice(0,10);if(!m[wk])m[wk]={};AK.forEach(function(k){m[wk][k]=(m[wk][k]||0)+r[k]})});return m}
 function byMonth(fd){var m={};fd.forEach(function(r){var mo=r.d.slice(0,7);if(!m[mo])m[mo]={};AK.forEach(function(k){m[mo][k]=(m[mo][k]||0)+r[k]})});return m}
@@ -536,7 +533,8 @@ Plotly.newPlot('c_strd',[{x:weeks,y:weeks.map(function(w){return wk[w].serviceab
 };
 
 window.rt6=function(){
-var le={};LD.forEach(function(r){if(!le[r.e])le[r.e]={};le[r.e][r.l]=(le[r.e][r.l]||0)+r.u});
+var fLD=filtArr(LD);
+var le={};fLD.forEach(function(r){if(!le[r.e])le[r.e]={};le[r.e][r.l]=(le[r.e][r.l]||0)+r.u});
 var evts=['App Installed','booking_homepage_loaded','serviceable_page_loaded','unserviceable_page_loaded','how_does_it_work_clicked','how_to_get_started_clicked','cost_today_clicked','pay_100_to_move_forward_clicked','booking_fee_captured','choose_different_location_clicked'];
 var labels=['App Installed','Homepage Loaded','Serviceable','Unserviceable','How It Works','Get Started','Cost Today','Pay 100','Booking','Diff Location'];
 var funnelEvts=['App Installed','booking_homepage_loaded','serviceable_page_loaded','how_does_it_work_clicked','cost_today_clicked','pay_100_to_move_forward_clicked','booking_fee_captured'];
@@ -552,31 +550,40 @@ Plotly.newPlot('c_lconv',[{x:FL,y:hiF.map(function(v,i){return i===0?100:Math.ro
 };
 
 window.rt7=function(){
-var t3=LOC.slice(0,3),total=0;LOC.forEach(function(r){total+=r.u});
+var fLOC=filtArr(LOC);
+// Aggregate filtered data by page+lang
+var lm={};fLOC.forEach(function(r){var k=r.p+'|'+r.l;lm[k]=(lm[k]||0)+r.u});
+var aLOC=Object.keys(lm).map(function(k){var p=k.split('|');return{p:p[0],l:p[1],u:lm[k]}}).sort(function(a,b){return b.u-a.u});
+var t3=aLOC.slice(0,3),total=0;aLOC.forEach(function(r){total+=r.u});
 var kh='<div class="kpi orange"><div class="v">'+fmt(total)+'</div><div class="l">Total Location Changes</div></div>';
 t3.forEach(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;kh+='<div class="kpi"><div class="v">'+fmt(r.u)+'</div><div class="l">'+r.p+' ('+ln+')</div></div>'});
 document.getElementById('k7').innerHTML=kh;
-var t10=LOC.slice(0,10),px=t10.map(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;return r.p+' ('+ln+')'}),uy=t10.map(function(r){return r.u}),cs=t10.map(function(r){return r.l==='hi'?'#f59e0b':r.l==='en'?'#3b82f6':'#94a3b8'});
+var t10=aLOC.slice(0,10),px=t10.map(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;return r.p+' ('+ln+')'}),uy=t10.map(function(r){return r.u}),cs=t10.map(function(r){return r.l==='hi'?'#f59e0b':r.l==='en'?'#3b82f6':'#94a3b8'});
 Plotly.newPlot('c_loc',[{x:px,y:uy,type:'bar',marker:{color:cs},text:uy.map(function(v){return fmt(v)}),textposition:'outside'}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Users'},margin:{t:30,b:120,l:60,r:20}}),RC);
-var tb='';LOC.forEach(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;tb+='<tr><td>'+r.p+'</td><td>'+ln+'</td><td>'+fmt(r.u)+'</td></tr>'});
+var tb='';aLOC.forEach(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;tb+='<tr><td>'+r.p+'</td><td>'+ln+'</td><td>'+fmt(r.u)+'</td></tr>'});
 document.querySelector('#tb_loc tbody').innerHTML=tb;
 };
 
 window.rt8=function(){
-var toEn=LCS['en']||0,toHi=LCS['hi']||0,toUnk=LCS['unknown']||0,totalU=toEn+toHi+toUnk;
+var fLC=filtArr(LC);
+// Compute summary from filtered data
+var fLCS={};fLC.forEach(function(r){fLCS[r.l]=(fLCS[r.l]||0)+r.u});
+var toEn=fLCS['en']||0,toHi=fLCS['hi']||0,toUnk=fLCS['unknown']||0,totalU=toEn+toHi+toUnk;
 document.getElementById('k8').innerHTML=
 '<div class="kpi purple"><div class="v">'+fmt(totalU)+'</div><div class="l">Total Users Changed Lang</div></div>'+
 '<div class="kpi"><div class="v">'+fmt(toEn)+'</div><div class="l">Switched to English</div></div>'+
 '<div class="kpi orange"><div class="v">'+fmt(toHi)+'</div><div class="l">Switched to Hindi</div></div>'+
 '<div class="kpi"><div class="v">'+fmt(toUnk)+'</div><div class="l">Unknown Language</div></div>';
 // Aggregate by page
-var pg={};LC.forEach(function(r){if(!pg[r.p])pg[r.p]={u:0,hi:0,en:0,unk:0,c:0};pg[r.p].u+=r.u;pg[r.p].c+=r.c;if(r.l==='hi')pg[r.p].hi+=r.u;else if(r.l==='en')pg[r.p].en+=r.u;else pg[r.p].unk+=r.u});
+var pg={};fLC.forEach(function(r){if(!pg[r.p])pg[r.p]={u:0,hi:0,en:0,unk:0,c:0};pg[r.p].u+=r.u;pg[r.p].c+=r.c;if(r.l==='hi')pg[r.p].hi+=r.u;else if(r.l==='en')pg[r.p].en+=r.u;else pg[r.p].unk+=r.u});
 var pArr=Object.keys(pg).map(function(p){return{p:p,u:pg[p].u,hi:pg[p].hi,en:pg[p].en,unk:pg[p].unk,c:pg[p].c}}).sort(function(a,b){return b.u-a.u});
 var top10=pArr.slice(0,10);
 Plotly.newPlot('c_lcpage',[{y:top10.map(function(r){return r.p}).reverse(),x:top10.map(function(r){return r.u}).reverse(),type:'bar',orientation:'h',marker:{color:'#a855f7'},text:top10.map(function(r){return fmt(r.u)}).reverse(),textposition:'outside'}],L({showlegend:false,margin:{t:20,b:40,l:200,r:60},xaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
 Plotly.newPlot('c_lclang',[{x:top10.map(function(r){return r.p}),y:top10.map(function(r){return r.hi}),name:'To Hindi',type:'bar',marker:{color:'#f59e0b'}},{x:top10.map(function(r){return r.p}),y:top10.map(function(r){return r.en}),name:'To English',type:'bar',marker:{color:'#3b82f6'}}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Users'},margin:{t:30,b:120,l:60,r:20}}),RC);
-// Table
-var tb='';LC.sort(function(a,b){return b.u-a.u}).forEach(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;tb+='<tr><td>'+r.p+'</td><td>'+ln+'</td><td>'+fmt(r.c)+'</td><td>'+fmt(r.u)+'</td></tr>'});
+// Table - aggregate filtered data for table display
+var tbl={};fLC.forEach(function(r){var k=r.p+'|'+r.l;if(!tbl[k])tbl[k]={p:r.p,l:r.l,c:0,u:0};tbl[k].c+=r.c;tbl[k].u+=r.u});
+var tblArr=Object.values(tbl).sort(function(a,b){return b.u-a.u});
+var tb='';tblArr.forEach(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;tb+='<tr><td>'+r.p+'</td><td>'+ln+'</td><td>'+fmt(r.c)+'</td><td>'+fmt(r.u)+'</td></tr>'});
 document.querySelector('#tb_lc tbody').innerHTML=tb;
 };
 
