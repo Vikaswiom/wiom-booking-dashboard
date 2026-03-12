@@ -213,7 +213,7 @@ except Exception as e:
     version_data = []
 
 # =====================================================================
-# QUERY 7: Recovery journey (Unserviceable → Changed Location → Serviceable)
+# QUERY 7: Recovery journey (Unserviceable → Changed Location → Serviceable → Booking Fee Paid)
 # =====================================================================
 print("Fetching recovery journey data...")
 q7 = f"""WITH {INSTALL_BASE_CTE},
@@ -221,10 +221,11 @@ user_journey AS (
   SELECT ib.USER_ID, ib.install_date,
     MIN(CASE WHEN c.EVENT_NAME='unserviceable_page_loaded' THEN c.TIMESTAMP END) as t_unserv,
     MIN(CASE WHEN c.EVENT_NAME='choose_different_location_clicked' THEN c.TIMESTAMP END) as t_change,
-    MIN(CASE WHEN c.EVENT_NAME='serviceable_page_loaded' THEN c.TIMESTAMP END) as t_serv
+    MIN(CASE WHEN c.EVENT_NAME='serviceable_page_loaded' THEN c.TIMESTAMP END) as t_serv,
+    MIN(CASE WHEN c.EVENT_NAME='booking_fee_captured' THEN c.TIMESTAMP END) as t_booked
   FROM install_base ib
   INNER JOIN PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER c ON c.USER_ID = ib.USER_ID
-    AND c.EVENT_NAME IN ('unserviceable_page_loaded','choose_different_location_clicked','serviceable_page_loaded')
+    AND c.EVENT_NAME IN ('unserviceable_page_loaded','choose_different_location_clicked','serviceable_page_loaded','booking_fee_captured')
     AND c.TIMESTAMP >= '2026-01-26'
   GROUP BY ib.USER_ID, ib.install_date
   HAVING t_unserv IS NOT NULL
@@ -232,12 +233,13 @@ user_journey AS (
 SELECT install_date,
   COUNT(*) as unserv_users,
   SUM(CASE WHEN t_change IS NOT NULL AND t_change > t_unserv THEN 1 ELSE 0 END) as changed_after_unserv,
-  SUM(CASE WHEN t_change IS NOT NULL AND t_serv IS NOT NULL AND t_change > t_unserv AND t_serv > t_change THEN 1 ELSE 0 END) as recovered
+  SUM(CASE WHEN t_change IS NOT NULL AND t_serv IS NOT NULL AND t_change > t_unserv AND t_serv > t_change THEN 1 ELSE 0 END) as recovered,
+  SUM(CASE WHEN t_change IS NOT NULL AND t_serv IS NOT NULL AND t_booked IS NOT NULL AND t_change > t_unserv AND t_serv > t_change AND t_booked > t_serv THEN 1 ELSE 0 END) as booked
 FROM user_journey
 GROUP BY install_date ORDER BY install_date"""
 try:
     _, recovery_rows = run_query(q7)
-    recovery_data = [{'d': r[0][:10], 'unserv': r[1], 'changed': r[2], 'recovered': r[3]} for r in recovery_rows]
+    recovery_data = [{'d': r[0][:10], 'unserv': r[1], 'changed': r[2], 'recovered': r[3], 'booked': r[4]} for r in recovery_rows]
 except Exception as e:
     print(f"Warning: Recovery journey query failed: {e}")
     recovery_data = []
@@ -386,8 +388,8 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 </div>
 <div class="cc"><div class="ct">Weekly Trend</div><div id="c_strd" style="height:350px"></div></div>
 <div class="cc" style="margin-top:24px;border:1px solid rgba(34,197,94,0.3);background:linear-gradient(135deg,rgba(34,197,94,0.05),rgba(59,130,246,0.05))">
-<div class="ct" style="color:#22c55e">Recovery Journey: Unserviceable → Changed Location → Got Serviceable</div>
-<p style="color:#94a3b8;font-size:12px;margin-bottom:16px">Users who first landed on an unserviceable page, then changed their location, and eventually loaded a serviceable page (in sequential order by timestamp)</p>
+<div class="ct" style="color:#22c55e">Recovery Journey: Unserviceable → Changed Location → Got Serviceable → Booking Fee Paid</div>
+<p style="color:#94a3b8;font-size:12px;margin-bottom:16px">Users who first landed on an unserviceable page, then changed their location, got a serviceable page, and finally paid the booking fee (in sequential order by timestamp)</p>
 <div class="kg" id="k5r"></div>
 <div class="g2">
 <div id="c_recovery" style="height:350px"></div>
@@ -571,18 +573,20 @@ var hpT=s.homepage||1;Plotly.newPlot('c_locbar',[{x:['Serviceable','Unserviceabl
 var wk=byWeek(fd),weeks=Object.keys(wk).sort();
 Plotly.newPlot('c_strd',[{x:weeks,y:weeks.map(function(w){return wk[w].serviceable||0}),name:'Serviceable',type:'scatter',mode:'lines+markers',line:{color:'#22c55e'}},{x:weeks,y:weeks.map(function(w){return wk[w].unserviceable||0}),name:'Unserviceable',type:'scatter',mode:'lines+markers',line:{color:'#ef4444'}}],L(),RC);
 // Recovery journey
-var fRD=filtArr(RD),rU=0,rC=0,rR=0;fRD.forEach(function(r){rU+=r.unserv;rC+=r.changed;rR+=r.recovered});
-var cPct=rU>0?Math.round(rC/rU*1000)/10:0,rPct=rU>0?Math.round(rR/rU*1000)/10:0,rFromC=rC>0?Math.round(rR/rC*1000)/10:0;
+var fRD=filtArr(RD),rU=0,rC=0,rR=0,rB=0;fRD.forEach(function(r){rU+=r.unserv;rC+=r.changed;rR+=r.recovered;rB+=r.booked});
+var cPct=rU>0?Math.round(rC/rU*1000)/10:0,rPct=rU>0?Math.round(rR/rU*1000)/10:0,bPct=rU>0?Math.round(rB/rU*1000)/10:0,rFromC=rC>0?Math.round(rR/rC*1000)/10:0,bFromR=rR>0?Math.round(rB/rR*1000)/10:0;
 document.getElementById('k5r').innerHTML=
 '<div class="kpi red"><div class="v">'+fmt(rU)+'</div><div class="l">Unserviceable (Unique Users)</div></div>'+
 '<div class="kpi orange"><div class="v">'+fmt(rC)+' ('+cPct+'%)</div><div class="l">Changed Location After Unserv</div></div>'+
 '<div class="kpi green"><div class="v">'+fmt(rR)+' ('+rPct+'%)</div><div class="l">Recovered to Serviceable</div></div>'+
-'<div class="kpi purple"><div class="v">'+rFromC+'%</div><div class="l">Recovery Rate (of Changed)</div></div>';
-Plotly.newPlot('c_recovery',[{type:'funnel',y:['Unserviceable','Changed Location','Got Serviceable'],x:[rU,rC,rR],textinfo:'value+percent initial',marker:{color:['#ef4444','#f59e0b','#22c55e']},connector:{line:{color:'#334155'}}}],L({margin:{t:20,b:20,l:160,r:80},showlegend:false}),RC);
+'<div class="kpi blue"><div class="v">'+fmt(rB)+' ('+bPct+'%)</div><div class="l">Booking Fee Paid</div></div>'+
+'<div class="kpi purple"><div class="v">'+rFromC+'%</div><div class="l">Recovery Rate (of Changed)</div></div>'+
+'<div class="kpi purple"><div class="v">'+bFromR+'%</div><div class="l">Booking Rate (of Recovered)</div></div>';
+Plotly.newPlot('c_recovery',[{type:'funnel',y:['Unserviceable','Changed Location','Got Serviceable','Booking Fee Paid'],x:[rU,rC,rR,rB],textinfo:'value+percent initial',marker:{color:['#ef4444','#f59e0b','#22c55e','#3b82f6']},connector:{line:{color:'#334155'}}}],L({margin:{t:20,b:20,l:160,r:80},showlegend:false}),RC);
 // Weekly recovery trend
-var rwk={};fRD.forEach(function(r){var d=new Date(r.d),dy=d.getDay(),df=d.getDate()-dy+(dy===0?-6:1),mon=new Date(d.setDate(df)),wk=mon.toISOString().slice(0,10);if(!rwk[wk])rwk[wk]={u:0,c:0,r:0};rwk[wk].u+=r.unserv;rwk[wk].c+=r.changed;rwk[wk].r+=r.recovered});
+var rwk={};fRD.forEach(function(r){var d=new Date(r.d),dy=d.getDay(),df=d.getDate()-dy+(dy===0?-6:1),mon=new Date(d.setDate(df)),wk=mon.toISOString().slice(0,10);if(!rwk[wk])rwk[wk]={u:0,c:0,r:0,b:0};rwk[wk].u+=r.unserv;rwk[wk].c+=r.changed;rwk[wk].r+=r.recovered;rwk[wk].b+=r.booked});
 var rweeks=Object.keys(rwk).sort();
-Plotly.newPlot('c_recbar',[{x:rweeks,y:rweeks.map(function(w){return rwk[w].u}),name:'Unserviceable',type:'bar',marker:{color:'#ef4444'},text:rweeks.map(function(w){return fmt(rwk[w].u)}),textposition:'outside'},{x:rweeks,y:rweeks.map(function(w){return rwk[w].c}),name:'Changed Loc',type:'bar',marker:{color:'#f59e0b'},text:rweeks.map(function(w){var v=rwk[w].c,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'outside'},{x:rweeks,y:rweeks.map(function(w){return rwk[w].r}),name:'Recovered',type:'bar',marker:{color:'#22c55e'},text:rweeks.map(function(w){var v=rwk[w].r,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'outside'}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Unique Users'},xaxis:{gridcolor:'#334155',title:'Week'}}),RC);
+Plotly.newPlot('c_recbar',[{x:rweeks,y:rweeks.map(function(w){return rwk[w].u}),name:'Unserviceable',type:'bar',marker:{color:'#ef4444'},text:rweeks.map(function(w){return fmt(rwk[w].u)}),textposition:'outside'},{x:rweeks,y:rweeks.map(function(w){return rwk[w].c}),name:'Changed Loc',type:'bar',marker:{color:'#f59e0b'},text:rweeks.map(function(w){var v=rwk[w].c,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'outside'},{x:rweeks,y:rweeks.map(function(w){return rwk[w].r}),name:'Recovered',type:'bar',marker:{color:'#22c55e'},text:rweeks.map(function(w){var v=rwk[w].r,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'outside'},{x:rweeks,y:rweeks.map(function(w){return rwk[w].b}),name:'Booking Paid',type:'bar',marker:{color:'#3b82f6'},text:rweeks.map(function(w){var v=rwk[w].b,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'outside'}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Unique Users'},xaxis:{gridcolor:'#334155',title:'Week'}}),RC);
 };
 
 window.rt6=function(){
