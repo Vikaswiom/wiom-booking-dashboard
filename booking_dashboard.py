@@ -347,7 +347,7 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 <div class="kg" id="k5r"></div>
 <div class="g2">
 <div id="c_recovery" style="height:350px"></div>
-<div id="c_recbar" style="height:350px"></div>
+<div id="c_recbar" style="height:420px"></div>
 </div>
 </div>
 </div>
@@ -364,7 +364,7 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 <div class="kg" id="k7"></div>
 <div class="g2">
 <div class="cc"><div class="ct">Language Changes by Page - Top 10 (Unique Users)</div><div id="c_lcpage" style="height:400px"></div></div>
-<div class="cc"><div class="ct">Switch To Hindi vs English by Page (Unique Users)</div><div id="c_lclang" style="height:400px"></div></div>
+<div class="cc"><div class="ct">Switch To Hindi vs English by Page (Unique Users)</div><div id="c_lclang" style="height:480px"></div></div>
 </div>
 <div class="cc"><div class="ct">Language Change Detail</div><div style="overflow-x:auto"><table id="tb_lc"><thead><tr><th>Page</th><th>Switched To</th><th>Total Events</th><th>Unique Users</th></tr></thead><tbody></tbody></table></div></div>
 </div>
@@ -419,7 +419,7 @@ var EK={'App Installed':'installs','booking_homepage_loaded':'homepage','service
 'choose_different_location_clicked':'diff_location'};
 
 var RC={responsive:true};
-function L(o){var b={paper_bgcolor:'#1e293b',plot_bgcolor:'#1e293b',font:{color:'#94a3b8',size:12},xaxis:{gridcolor:'#334155'},yaxis:{gridcolor:'#334155'},margin:{t:30,b:50,l:60,r:20},legend:{orientation:'h',y:-0.15}};if(o)for(var k in o)b[k]=o[k];return b}
+function L(o){var b={paper_bgcolor:'#1e293b',plot_bgcolor:'#1e293b',font:{color:'#94a3b8',size:11},xaxis:{gridcolor:'#334155'},yaxis:{gridcolor:'#334155'},margin:{t:30,b:50,l:60,r:20},legend:{orientation:'h',y:-0.15},uniformtext:{minsize:8,mode:'hide'}};if(o)for(var k in o)b[k]=o[k];return b}
 function fmt(n){return n.toLocaleString()}
 
 var at=0;
@@ -475,9 +475,9 @@ var lb=FL[i-1]+' -> '+FL[i];lbl.push(lb);cv.push(co);dr.push(dp);
 var clr=co>60?'#22c55e':co>30?'#f59e0b':'#ef4444';cl.push(clr);
 tb+='<tr><td>'+FL[i-1]+'</td><td>'+FL[i]+'</td><td>'+fmt(d)+'</td><td style="color:#ef4444">'+dp+'%</td><td style="color:'+clr+';font-weight:600">'+co+'%</td></tr>'}
 document.querySelector('#tb_dropoff tbody').innerHTML=tb;
-Plotly.newPlot('c_dropoff',[{x:lbl,y:dr,type:'bar',marker:{color:'#ef4444'},text:dr.map(function(v){return v+'%'}),textposition:'outside'}],L({yaxis:{gridcolor:'#334155',title:'Drop %'}}),RC);
-Plotly.newPlot('c_conv',[{x:lbl,y:cv,type:'bar',marker:{color:cl},text:cv.map(function(v){return v+'%'}),textposition:'outside'}],L({yaxis:{gridcolor:'#334155',title:'Conv %'},showlegend:false}),RC);
-var inst=vals[0]||1;Plotly.newPlot('c_step',[{x:FL,y:vals,type:'bar',marker:{color:FC},text:vals.map(function(v){return fmt(v)+' ('+Math.round(v/inst*1000)/10+'%)'}),textposition:'outside'}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
+Plotly.newPlot('c_dropoff',[{x:lbl,y:dr,type:'bar',marker:{color:'#ef4444'},text:dr.map(function(v){return v+'%'}),textposition:'auto',textfont:{size:10}}],L({yaxis:{gridcolor:'#334155',title:'Drop %'},margin:{t:30,b:120,l:60,r:20},xaxis:{gridcolor:'#334155',tickangle:-25}}),RC);
+Plotly.newPlot('c_conv',[{x:lbl,y:cv,type:'bar',marker:{color:cl},text:cv.map(function(v){return v+'%'}),textposition:'auto',textfont:{size:10}}],L({yaxis:{gridcolor:'#334155',title:'Conv %'},showlegend:false,margin:{t:30,b:120,l:60,r:20},xaxis:{gridcolor:'#334155',tickangle:-25}}),RC);
+var inst=vals[0]||1;Plotly.newPlot('c_step',[{x:FL,y:vals,type:'bar',marker:{color:FC},text:vals.map(function(v){return fmt(v)+' ('+Math.round(v/inst*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Unique Users'},margin:{t:30,b:100,l:60,r:20},xaxis:{gridcolor:'#334155',tickangle:-25}}),RC);
 };
 
 window.rt2=function(fd){
@@ -486,7 +486,7 @@ var tr=FK.map(function(k,i){return{x:weeks,y:weeks.map(function(w){return wk[w][
 Plotly.newPlot('c_weekly',tr,L({xaxis:{gridcolor:'#334155',title:'Week'},yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
 var cd=weeks.map(function(w){var inst=wk[w].installs||1;return Math.round((wk[w].fee_captured||0)/inst*10000)/100});
 Plotly.newPlot('c_wconv',[{x:weeks,y:cd,type:'scatter',mode:'lines+markers+text',text:cd.map(function(v){return v+'%'}),textposition:'top',line:{color:'#22c55e',width:3},marker:{size:8}}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Conv %'}}),RC);
-Plotly.newPlot('c_wserv',[{x:weeks,y:weeks.map(function(w){return wk[w].serviceable||0}),name:'Serviceable',type:'bar',marker:{color:'#22c55e'},text:weeks.map(function(w){var v=wk[w].serviceable||0,hp=wk[w].homepage||1;return fmt(v)+' ('+Math.round(v/hp*1000)/10+'%)'}),textposition:'outside'},{x:weeks,y:weeks.map(function(w){return wk[w].unserviceable||0}),name:'Unserviceable',type:'bar',marker:{color:'#ef4444'},text:weeks.map(function(w){var v=wk[w].unserviceable||0,hp=wk[w].homepage||1;return fmt(v)+' ('+Math.round(v/hp*1000)/10+'%)'}),textposition:'outside'}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
+Plotly.newPlot('c_wserv',[{x:weeks,y:weeks.map(function(w){return wk[w].serviceable||0}),name:'Serviceable',type:'bar',marker:{color:'#22c55e'},text:weeks.map(function(w){var v=wk[w].serviceable||0,hp=wk[w].homepage||1;return fmt(v)+' ('+Math.round(v/hp*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}},{x:weeks,y:weeks.map(function(w){return wk[w].unserviceable||0}),name:'Unserviceable',type:'bar',marker:{color:'#ef4444'},text:weeks.map(function(w){var v=wk[w].unserviceable||0,hp=wk[w].homepage||1;return fmt(v)+' ('+Math.round(v/hp*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
 };
 
 window.rt3=function(fd){
@@ -515,7 +515,7 @@ document.getElementById('k5').innerHTML=
 '<div class="kpi orange"><div class="v">'+fmt(s.diff_location)+'</div><div class="l">Changed Location (Unique Users)</div></div>'+
 '<div class="kpi purple"><div class="v">'+fmt(s.get_started)+'</div><div class="l">How to Get Started (Unique Users)</div></div>';
 Plotly.newPlot('c_pie',[{values:[s.serviceable,s.unserviceable],labels:['Serviceable','Unserviceable'],type:'pie',hole:0.5,marker:{colors:['#22c55e','#ef4444']},textinfo:'label+percent+value'}],L({showlegend:false}),RC);
-var hpT=s.homepage||1;Plotly.newPlot('c_locbar',[{x:['Serviceable','Unserviceable','Changed Loc','Get Started'],y:[s.serviceable,s.unserviceable,s.diff_location,s.get_started],type:'bar',marker:{color:['#22c55e','#ef4444','#f59e0b','#a855f7']},text:[s.serviceable,s.unserviceable,s.diff_location,s.get_started].map(function(v){return fmt(v)+' ('+Math.round(v/hpT*1000)/10+'%)'}),textposition:'outside'}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
+var hpT=s.homepage||1;Plotly.newPlot('c_locbar',[{x:['Serviceable','Unserviceable','Changed Loc','Get Started'],y:[s.serviceable,s.unserviceable,s.diff_location,s.get_started],type:'bar',marker:{color:['#22c55e','#ef4444','#f59e0b','#a855f7']},text:[s.serviceable,s.unserviceable,s.diff_location,s.get_started].map(function(v){return fmt(v)+' ('+Math.round(v/hpT*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
 var wk=byWeek(fd),weeks=Object.keys(wk).sort();
 Plotly.newPlot('c_strd',[{x:weeks,y:weeks.map(function(w){return wk[w].serviceable||0}),name:'Serviceable',type:'scatter',mode:'lines+markers',line:{color:'#22c55e'}},{x:weeks,y:weeks.map(function(w){return wk[w].unserviceable||0}),name:'Unserviceable',type:'scatter',mode:'lines+markers',line:{color:'#ef4444'}}],L(),RC);
 // Recovery journey
@@ -532,7 +532,7 @@ Plotly.newPlot('c_recovery',[{type:'funnel',y:['Unserviceable','Changed Location
 // Weekly recovery trend
 var rwk={};fRD.forEach(function(r){var d=new Date(r.d),dy=d.getDay(),df=d.getDate()-dy+(dy===0?-6:1),mon=new Date(d.setDate(df)),wk=mon.toISOString().slice(0,10);if(!rwk[wk])rwk[wk]={u:0,c:0,r:0,b:0};rwk[wk].u+=r.unserv;rwk[wk].c+=r.changed;rwk[wk].r+=r.recovered;rwk[wk].b+=r.booked});
 var rweeks=Object.keys(rwk).sort();
-Plotly.newPlot('c_recbar',[{x:rweeks,y:rweeks.map(function(w){return rwk[w].u}),name:'Unserviceable',type:'bar',marker:{color:'#ef4444'},text:rweeks.map(function(w){return fmt(rwk[w].u)}),textposition:'outside'},{x:rweeks,y:rweeks.map(function(w){return rwk[w].c}),name:'Changed Loc',type:'bar',marker:{color:'#f59e0b'},text:rweeks.map(function(w){var v=rwk[w].c,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'outside'},{x:rweeks,y:rweeks.map(function(w){return rwk[w].r}),name:'Recovered',type:'bar',marker:{color:'#22c55e'},text:rweeks.map(function(w){var v=rwk[w].r,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'outside'},{x:rweeks,y:rweeks.map(function(w){return rwk[w].b}),name:'Booking Paid',type:'bar',marker:{color:'#3b82f6'},text:rweeks.map(function(w){var v=rwk[w].b,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'outside'}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Unique Users'},xaxis:{gridcolor:'#334155',title:'Week'}}),RC);
+Plotly.newPlot('c_recbar',[{x:rweeks,y:rweeks.map(function(w){return rwk[w].u}),name:'Unserviceable',type:'bar',marker:{color:'#ef4444'},text:rweeks.map(function(w){return fmt(rwk[w].u)}),textposition:'auto',textfont:{size:9}},{x:rweeks,y:rweeks.map(function(w){return rwk[w].c}),name:'Changed Loc',type:'bar',marker:{color:'#f59e0b'},text:rweeks.map(function(w){var v=rwk[w].c,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'auto',textfont:{size:9}},{x:rweeks,y:rweeks.map(function(w){return rwk[w].r}),name:'Recovered',type:'bar',marker:{color:'#22c55e'},text:rweeks.map(function(w){var v=rwk[w].r,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'auto',textfont:{size:9}},{x:rweeks,y:rweeks.map(function(w){return rwk[w].b}),name:'Booking Paid',type:'bar',marker:{color:'#3b82f6'},text:rweeks.map(function(w){var v=rwk[w].b,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'auto',textfont:{size:9}}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Unique Users'},xaxis:{gridcolor:'#334155',title:'Week'}}),RC);
 };
 
 window.rt6=function(){
@@ -545,7 +545,7 @@ var kh='<div class="kpi orange"><div class="v">'+fmt(total)+'</div><div class="l
 t3.forEach(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;kh+='<div class="kpi"><div class="v">'+fmt(r.u)+'</div><div class="l">'+r.p+' ('+ln+')</div></div>'});
 document.getElementById('k6').innerHTML=kh;
 var t10=aLOC.slice(0,10),px=t10.map(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;return r.p+' ('+ln+')'}),uy=t10.map(function(r){return r.u}),cs=t10.map(function(r){return r.l==='hi'?'#f59e0b':r.l==='en'?'#3b82f6':'#94a3b8'});
-Plotly.newPlot('c_loc',[{x:px,y:uy,type:'bar',marker:{color:cs},text:uy.map(function(v){return fmt(v)+' ('+Math.round(v/total*1000)/10+'%)'}),textposition:'outside'}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Unique Users'},margin:{t:30,b:120,l:60,r:20}}),RC);
+Plotly.newPlot('c_loc',[{x:px,y:uy,type:'bar',marker:{color:cs},text:uy.map(function(v){return fmt(v)+' ('+Math.round(v/total*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Unique Users'},margin:{t:30,b:150,l:60,r:20},xaxis:{gridcolor:'#334155',tickangle:-35}}),RC);
 var tb='';aLOC.forEach(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;tb+='<tr><td>'+r.p+'</td><td>'+ln+'</td><td>'+fmt(r.u)+'</td></tr>'});
 document.querySelector('#tb_loc tbody').innerHTML=tb;
 };
@@ -565,8 +565,8 @@ var pg={};fLC.forEach(function(r){if(!pg[r.p])pg[r.p]={u:0,hi:0,en:0,unk:0,c:0};
 var pArr=Object.keys(pg).map(function(p){return{p:p,u:pg[p].u,hi:pg[p].hi,en:pg[p].en,unk:pg[p].unk,c:pg[p].c}}).sort(function(a,b){return b.u-a.u});
 var top10=pArr.slice(0,10);
 var pgTotal=pArr.reduce(function(a,r){return a+r.u},0)||1;
-Plotly.newPlot('c_lcpage',[{y:top10.map(function(r){return r.p}).reverse(),x:top10.map(function(r){return r.u}).reverse(),type:'bar',orientation:'h',marker:{color:'#a855f7'},text:top10.map(function(r){return fmt(r.u)+' ('+Math.round(r.u/pgTotal*1000)/10+'%)'}).reverse(),textposition:'outside'}],L({showlegend:false,margin:{t:20,b:40,l:200,r:80},xaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
-Plotly.newPlot('c_lclang',[{x:top10.map(function(r){return r.p}),y:top10.map(function(r){return r.hi}),name:'To Hindi',type:'bar',marker:{color:'#f59e0b'},text:top10.map(function(r){return fmt(r.hi)+' ('+Math.round(r.hi/(r.u||1)*1000)/10+'%)'}),textposition:'outside'},{x:top10.map(function(r){return r.p}),y:top10.map(function(r){return r.en}),name:'To English',type:'bar',marker:{color:'#3b82f6'},text:top10.map(function(r){return fmt(r.en)+' ('+Math.round(r.en/(r.u||1)*1000)/10+'%)'}),textposition:'outside'}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Unique Users'},margin:{t:30,b:120,l:60,r:20}}),RC);
+Plotly.newPlot('c_lcpage',[{y:top10.map(function(r){return r.p}).reverse(),x:top10.map(function(r){return r.u}).reverse(),type:'bar',orientation:'h',marker:{color:'#a855f7'},text:top10.map(function(r){return fmt(r.u)+' ('+Math.round(r.u/pgTotal*1000)/10+'%)'}).reverse(),textposition:'auto',textfont:{size:10}}],L({showlegend:false,margin:{t:20,b:40,l:200,r:80},xaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
+Plotly.newPlot('c_lclang',[{x:top10.map(function(r){return r.p}),y:top10.map(function(r){return r.hi}),name:'To Hindi',type:'bar',marker:{color:'#f59e0b'},text:top10.map(function(r){return fmt(r.hi)+' ('+Math.round(r.hi/(r.u||1)*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}},{x:top10.map(function(r){return r.p}),y:top10.map(function(r){return r.en}),name:'To English',type:'bar',marker:{color:'#3b82f6'},text:top10.map(function(r){return fmt(r.en)+' ('+Math.round(r.en/(r.u||1)*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Unique Users'},margin:{t:30,b:150,l:60,r:20},xaxis:{gridcolor:'#334155',tickangle:-35}}),RC);
 // Table - aggregate filtered data for table display
 var tbl={};fLC.forEach(function(r){var k=r.p+'|'+r.l;if(!tbl[k])tbl[k]={p:r.p,l:r.l,c:0,u:0};tbl[k].c+=r.c;tbl[k].u+=r.u});
 var tblArr=Object.values(tbl).sort(function(a,b){return b.u-a.u});
