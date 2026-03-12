@@ -316,21 +316,21 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 <div class="ib"><h3>What does this show?</h3><p>Booking funnel for <strong>first-time installers</strong> (App Installed count=1, version 2026_*). Data is grouped by <strong>install date</strong> so App Installed is always 100% — no downstream step can exceed it. Use the date filter to select which install cohorts to include.</p></div>
 <div class="kg" id="k0"></div>
 <div class="cc"><div class="ct">Booking Funnel</div><div id="c_funnel" style="height:500px"></div></div>
-<div class="cc"><div class="ct">All Events Summary</div><div style="overflow-x:auto"><table id="tb_summary"><thead><tr><th>Event</th><th>Users</th><th>% of Installs</th></tr></thead><tbody></tbody></table></div></div>
+<div class="cc"><div class="ct">All Events Summary (Unique Users)</div><div style="overflow-x:auto"><table id="tb_summary"><thead><tr><th>Event</th><th>Unique Users</th><th>% of Installs</th></tr></thead><tbody></tbody></table></div></div>
 </div>
 
 <div class="tc" id="t1">
 <div class="ib"><h3>What does this show?</h3><ul><li><strong>Drop-off</strong> = users from previous step who did NOT reach next step</li><li><strong>Conversion</strong> = % who progressed. Red &lt;30%, Orange 30-60%, Green &gt;60%</li></ul></div>
 <div class="cc"><div class="ct">Step-by-Step Drop-off %</div><div id="c_dropoff" style="height:400px"></div></div>
-<div class="cc"><div class="ct">Conversion Between Steps</div><div style="overflow-x:auto"><table id="tb_dropoff"><thead><tr><th>From</th><th>To</th><th>Dropped</th><th>Drop %</th><th>Conv %</th></tr></thead><tbody></tbody></table></div></div>
+<div class="cc"><div class="ct">Conversion Between Steps (Unique Users)</div><div style="overflow-x:auto"><table id="tb_dropoff"><thead><tr><th>From</th><th>To</th><th>Dropped (Users)</th><th>Drop %</th><th>Conv %</th></tr></thead><tbody></tbody></table></div></div>
 <div class="g2">
 <div class="cc"><div class="ct">Conversion Rates (%)</div><div id="c_conv" style="height:350px"></div></div>
-<div class="cc"><div class="ct">Users at Each Step</div><div id="c_step" style="height:350px"></div></div>
+<div class="cc"><div class="ct">Unique Users at Each Step</div><div id="c_step" style="height:350px"></div></div>
 </div></div>
 
 <div class="tc" id="t2">
 <div class="ib"><h3>What does this show?</h3><p>Weekly install cohort trends. Each week shows users who installed that week and how many completed each funnel step.</p></div>
-<div class="cc"><div class="ct">Weekly Install Cohort Funnel</div><div id="c_weekly" style="height:450px"></div></div>
+<div class="cc"><div class="ct">Weekly Install Cohort Funnel (Unique Users)</div><div id="c_weekly" style="height:450px"></div></div>
 <div class="g2">
 <div class="cc"><div class="ct">Weekly Install to Booking %</div><div id="c_wconv" style="height:350px"></div></div>
 <div class="cc"><div class="ct">Weekly Serviceable vs Unserviceable</div><div id="c_wserv" style="height:350px"></div></div>
@@ -338,7 +338,7 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 
 <div class="tc" id="t3">
 <div class="ib"><h3>What does this show?</h3><p>Daily install cohort data. Each day shows installs and funnel completion for that day's installers.</p></div>
-<div class="cc"><div class="ct">Daily Install Cohort Trends</div><div id="c_daily" style="height:450px"></div></div>
+<div class="cc"><div class="ct">Daily Install Cohort Trends (Unique Users)</div><div id="c_daily" style="height:450px"></div></div>
 </div>
 
 <div class="tc" id="t4">
@@ -359,26 +359,26 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 
 <div class="tc" id="t6">
 <div class="ib"><h3>What does this show?</h3><ul><li>Which <strong>language</strong> users are on at each funnel step</li><li>Users can change language on any page — this captures language at event time</li><li>Compare Hindi vs English funnel conversion rates</li></ul></div>
-<div class="cc"><div class="ct">Hindi vs English at Each Step</div><div id="c_lang" style="height:450px"></div></div>
-<div class="cc"><div class="ct">Language Breakdown</div><div style="overflow-x:auto"><table id="tb_lang"><thead><tr><th>Event</th><th>Total</th><th>Hindi</th><th>Hindi %</th><th>English</th><th>English %</th><th>Unknown</th></tr></thead><tbody></tbody></table></div></div>
+<div class="cc"><div class="ct">Hindi vs English at Each Step (Unique Users)</div><div id="c_lang" style="height:450px"></div></div>
+<div class="cc"><div class="ct">Language Breakdown (Unique Users)</div><div style="overflow-x:auto"><table id="tb_lang"><thead><tr><th>Event</th><th>Total Users</th><th>Hindi Users</th><th>Hindi %</th><th>English Users</th><th>English %</th></tr></thead><tbody></tbody></table></div></div>
 <div class="cc"><div class="ct">Hindi vs English Conversion % (Install = 100%)</div><div id="c_lconv" style="height:400px"></div></div>
 </div>
 
 <div class="tc" id="t7">
 <div class="ib"><h3>What does this show?</h3><ul><li>On which <strong>page</strong> users click "Choose Different Location"</li><li>What <strong>language</strong> they use when changing location</li></ul></div>
 <div class="kg" id="k7"></div>
-<div class="cc"><div class="ct">Location Change by Page + Language</div><div id="c_loc" style="height:400px"></div></div>
-<div class="cc"><div class="ct">Detail Table</div><div style="overflow-x:auto"><table id="tb_loc"><thead><tr><th>Page</th><th>Language</th><th>Users</th></tr></thead><tbody></tbody></table></div></div>
+<div class="cc"><div class="ct">Location Change by Page + Language (Unique Users)</div><div id="c_loc" style="height:400px"></div></div>
+<div class="cc"><div class="ct">Detail Table</div><div style="overflow-x:auto"><table id="tb_loc"><thead><tr><th>Page</th><th>Language</th><th>Unique Users</th></tr></thead><tbody></tbody></table></div></div>
 </div>
 
 <div class="tc" id="t8">
 <div class="ib"><h3>What does this show?</h3><ul><li>On which <strong>screen/page</strong> users change their language most often</li><li>Whether users switch <strong>to Hindi</strong> or <strong>to English</strong></li><li>Helps understand language preference behavior across the booking flow</li></ul></div>
 <div class="kg" id="k8"></div>
 <div class="g2">
-<div class="cc"><div class="ct">Language Changes by Page (Top 10)</div><div id="c_lcpage" style="height:400px"></div></div>
-<div class="cc"><div class="ct">Switch To Hindi vs English by Page</div><div id="c_lclang" style="height:400px"></div></div>
+<div class="cc"><div class="ct">Language Changes by Page - Top 10 (Unique Users)</div><div id="c_lcpage" style="height:400px"></div></div>
+<div class="cc"><div class="ct">Switch To Hindi vs English by Page (Unique Users)</div><div id="c_lclang" style="height:400px"></div></div>
 </div>
-<div class="cc"><div class="ct">Language Change Detail</div><div style="overflow-x:auto"><table id="tb_lc"><thead><tr><th>Page</th><th>Switched To</th><th>Total Changes</th><th>Unique Users</th></tr></thead><tbody></tbody></table></div></div>
+<div class="cc"><div class="ct">Language Change Detail</div><div style="overflow-x:auto"><table id="tb_lc"><thead><tr><th>Page</th><th>Switched To</th><th>Total Events</th><th>Unique Users</th></tr></thead><tbody></tbody></table></div></div>
 </div>
 
 <div class="tc" id="t9">
@@ -469,13 +469,13 @@ var vals=FK.map(function(k){return s[k]});
 var inst=s.installs||1,book=s.fee_captured,conv=Math.round(book/inst*10000)/100;
 var hpU=s.homepage||1,sR=Math.round(s.serviceable/hpU*1000)/10,uR=Math.round(s.unserviceable/hpU*1000)/10;
 document.getElementById('k0').innerHTML=
-'<div class="kpi"><div class="v">'+fmt(s.installs)+'</div><div class="l">First-time Installs</div></div>'+
-'<div class="kpi green"><div class="v">'+fmt(book)+'</div><div class="l">Bookings</div></div>'+
-'<div class="kpi purple"><div class="v">'+conv+'%</div><div class="l">Install to Booking</div></div>'+
-'<div class="kpi orange"><div class="v">'+sR+'%</div><div class="l">Serviceable Rate</div></div>'+
-'<div class="kpi red"><div class="v">'+uR+'%</div><div class="l">Unserviceable Rate</div></div>';
+'<div class="kpi"><div class="v">'+fmt(s.installs)+'</div><div class="l">First-time Installs (Unique Users)</div></div>'+
+'<div class="kpi green"><div class="v">'+fmt(book)+'</div><div class="l">Bookings (Unique Users)</div></div>'+
+'<div class="kpi purple"><div class="v">'+conv+'%</div><div class="l">Install to Booking %</div></div>'+
+'<div class="kpi orange"><div class="v">'+sR+'%</div><div class="l">Serviceable Rate %</div></div>'+
+'<div class="kpi red"><div class="v">'+uR+'%</div><div class="l">Unserviceable Rate %</div></div>';
 Plotly.newPlot('c_funnel',[{type:'funnel',y:FL,x:vals,textinfo:'value+percent initial',marker:{color:FC},connector:{line:{color:'#334155'}}}],L({margin:{t:20,b:20,l:180,r:80},showlegend:false}),RC);
-var tb='';AK.forEach(function(k,i){var u=s[k],pct=Math.round(u/inst*1000)/10;tb+='<tr><td>'+AL[i]+'</td><td>'+fmt(u)+'</td><td>'+pct+'%</td></tr>'});
+var tb='';AK.forEach(function(k,i){var u=s[k],pct=Math.round(u/inst*1000)/10;tb+='<tr><td>'+AL[i]+'</td><td>'+fmt(u)+'</td><td style="color:var(--accent);font-weight:600">'+pct+'%</td></tr>'});
 document.querySelector('#tb_summary tbody').innerHTML=tb;
 };
 
@@ -489,22 +489,22 @@ tb+='<tr><td>'+FL[i-1]+'</td><td>'+FL[i]+'</td><td>'+fmt(d)+'</td><td style="col
 document.querySelector('#tb_dropoff tbody').innerHTML=tb;
 Plotly.newPlot('c_dropoff',[{x:lbl,y:dr,type:'bar',marker:{color:'#ef4444'},text:dr.map(function(v){return v+'%'}),textposition:'outside'}],L({yaxis:{gridcolor:'#334155',title:'Drop %'}}),RC);
 Plotly.newPlot('c_conv',[{x:lbl,y:cv,type:'bar',marker:{color:cl},text:cv.map(function(v){return v+'%'}),textposition:'outside'}],L({yaxis:{gridcolor:'#334155',title:'Conv %'},showlegend:false}),RC);
-Plotly.newPlot('c_step',[{x:FL,y:vals,type:'bar',marker:{color:FC},text:vals.map(function(v){return fmt(v)}),textposition:'outside'}],L({showlegend:false}),RC);
+var inst=vals[0]||1;Plotly.newPlot('c_step',[{x:FL,y:vals,type:'bar',marker:{color:FC},text:vals.map(function(v){return fmt(v)+' ('+Math.round(v/inst*1000)/10+'%)'}),textposition:'outside'}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
 };
 
 window.rt2=function(fd){
 var wk=byWeek(fd),weeks=Object.keys(wk).sort();
-var tr=FK.map(function(k,i){return{x:weeks,y:weeks.map(function(w){return wk[w][k]||0}),name:FL[i],type:'scatter',mode:'lines+markers'}});
-Plotly.newPlot('c_weekly',tr,L({xaxis:{gridcolor:'#334155',title:'Week'},yaxis:{gridcolor:'#334155',title:'Users'}}),RC);
+var tr=FK.map(function(k,i){return{x:weeks,y:weeks.map(function(w){return wk[w][k]||0}),name:FL[i],type:'scatter',mode:'lines+markers',text:weeks.map(function(w){var v=wk[w][k]||0,inst=wk[w].installs||1;return fmt(v)+' ('+Math.round(v/inst*1000)/10+'%)'}),hovertemplate:'%{text}'}});
+Plotly.newPlot('c_weekly',tr,L({xaxis:{gridcolor:'#334155',title:'Week'},yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
 var cd=weeks.map(function(w){var inst=wk[w].installs||1;return Math.round((wk[w].fee_captured||0)/inst*10000)/100});
 Plotly.newPlot('c_wconv',[{x:weeks,y:cd,type:'scatter',mode:'lines+markers+text',text:cd.map(function(v){return v+'%'}),textposition:'top',line:{color:'#22c55e',width:3},marker:{size:8}}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Conv %'}}),RC);
-Plotly.newPlot('c_wserv',[{x:weeks,y:weeks.map(function(w){return wk[w].serviceable||0}),name:'Serviceable',type:'bar',marker:{color:'#22c55e'}},{x:weeks,y:weeks.map(function(w){return wk[w].unserviceable||0}),name:'Unserviceable',type:'bar',marker:{color:'#ef4444'}}],L({barmode:'group'}),RC);
+Plotly.newPlot('c_wserv',[{x:weeks,y:weeks.map(function(w){return wk[w].serviceable||0}),name:'Serviceable',type:'bar',marker:{color:'#22c55e'},text:weeks.map(function(w){var v=wk[w].serviceable||0,hp=wk[w].homepage||1;return fmt(v)+' ('+Math.round(v/hp*1000)/10+'%)'}),textposition:'outside'},{x:weeks,y:weeks.map(function(w){return wk[w].unserviceable||0}),name:'Unserviceable',type:'bar',marker:{color:'#ef4444'},text:weeks.map(function(w){var v=wk[w].unserviceable||0,hp=wk[w].homepage||1;return fmt(v)+' ('+Math.round(v/hp*1000)/10+'%)'}),textposition:'outside'}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
 };
 
 window.rt3=function(fd){
 var days=fd.map(function(r){return r.d});
-var tr=FK.map(function(k,i){return{x:days,y:fd.map(function(r){return r[k]}),name:FL[i],type:'scatter',mode:'lines+markers'}});
-Plotly.newPlot('c_daily',tr,L({xaxis:{gridcolor:'#334155',title:'Install Date'},yaxis:{gridcolor:'#334155',title:'Users'}}),RC);
+var tr=FK.map(function(k,i){return{x:days,y:fd.map(function(r){return r[k]}),name:FL[i],type:'scatter',mode:'lines+markers',text:fd.map(function(r){var v=r[k],inst=r.installs||1;return fmt(v)+' ('+Math.round(v/inst*1000)/10+'%)'}),hovertemplate:'%{text}'}});
+Plotly.newPlot('c_daily',tr,L({xaxis:{gridcolor:'#334155',title:'Install Date'},yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
 };
 
 window.rt4=function(fd){
@@ -522,12 +522,12 @@ Plotly.newPlot('c_month',tr,L({barmode:'group'}),RC);
 
 window.rt5=function(fd,s){
 document.getElementById('k5').innerHTML=
-'<div class="kpi green"><div class="v">'+fmt(s.serviceable)+'</div><div class="l">Serviceable</div></div>'+
-'<div class="kpi red"><div class="v">'+fmt(s.unserviceable)+'</div><div class="l">Unserviceable</div></div>'+
-'<div class="kpi orange"><div class="v">'+fmt(s.diff_location)+'</div><div class="l">Changed Location</div></div>'+
-'<div class="kpi purple"><div class="v">'+fmt(s.get_started)+'</div><div class="l">How to Get Started</div></div>';
+'<div class="kpi green"><div class="v">'+fmt(s.serviceable)+'</div><div class="l">Serviceable (Unique Users)</div></div>'+
+'<div class="kpi red"><div class="v">'+fmt(s.unserviceable)+'</div><div class="l">Unserviceable (Unique Users)</div></div>'+
+'<div class="kpi orange"><div class="v">'+fmt(s.diff_location)+'</div><div class="l">Changed Location (Unique Users)</div></div>'+
+'<div class="kpi purple"><div class="v">'+fmt(s.get_started)+'</div><div class="l">How to Get Started (Unique Users)</div></div>';
 Plotly.newPlot('c_pie',[{values:[s.serviceable,s.unserviceable],labels:['Serviceable','Unserviceable'],type:'pie',hole:0.5,marker:{colors:['#22c55e','#ef4444']},textinfo:'label+percent+value'}],L({showlegend:false}),RC);
-Plotly.newPlot('c_locbar',[{x:['Serviceable','Unserviceable','Changed Loc','Get Started'],y:[s.serviceable,s.unserviceable,s.diff_location,s.get_started],type:'bar',marker:{color:['#22c55e','#ef4444','#f59e0b','#a855f7']},text:[s.serviceable,s.unserviceable,s.diff_location,s.get_started].map(function(v){return fmt(v)}),textposition:'outside'}],L({showlegend:false}),RC);
+var hpT=s.homepage||1;Plotly.newPlot('c_locbar',[{x:['Serviceable','Unserviceable','Changed Loc','Get Started'],y:[s.serviceable,s.unserviceable,s.diff_location,s.get_started],type:'bar',marker:{color:['#22c55e','#ef4444','#f59e0b','#a855f7']},text:[s.serviceable,s.unserviceable,s.diff_location,s.get_started].map(function(v){return fmt(v)+' ('+Math.round(v/hpT*1000)/10+'%)'}),textposition:'outside'}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
 var wk=byWeek(fd),weeks=Object.keys(wk).sort();
 Plotly.newPlot('c_strd',[{x:weeks,y:weeks.map(function(w){return wk[w].serviceable||0}),name:'Serviceable',type:'scatter',mode:'lines+markers',line:{color:'#22c55e'}},{x:weeks,y:weeks.map(function(w){return wk[w].unserviceable||0}),name:'Unserviceable',type:'scatter',mode:'lines+markers',line:{color:'#ef4444'}}],L(),RC);
 };
@@ -539,12 +539,13 @@ var evts=['App Installed','booking_homepage_loaded','serviceable_page_loaded','u
 var labels=['App Installed','Homepage Loaded','Serviceable','Unserviceable','How It Works','Get Started','Cost Today','Pay 100','Booking','Diff Location'];
 var funnelEvts=['App Installed','booking_homepage_loaded','serviceable_page_loaded','how_does_it_work_clicked','cost_today_clicked','pay_100_to_move_forward_clicked','booking_fee_captured'];
 var tb='',hiF=[],enF=[];
-evts.forEach(function(e,i){var lg=le[e]||{},hi=lg['hi']||0,en=lg['en']||0,tot=0;for(var k in lg)tot+=lg[k];var unk=tot-hi-en;
+evts.forEach(function(e,i){var lg=le[e]||{},hi=lg['hi']||0,en=lg['en']||0,tot=hi+en;
 var hP=tot>0?Math.round(hi/tot*1000)/10:0,eP=tot>0?Math.round(en/tot*1000)/10:0;
-tb+='<tr><td style="font-weight:600">'+labels[i]+'</td><td>'+fmt(tot)+'</td><td>'+fmt(hi)+'</td><td style="color:#f59e0b">'+hP+'%</td><td>'+fmt(en)+'</td><td style="color:#3b82f6">'+eP+'%</td><td>'+fmt(unk)+'</td></tr>'});
+tb+='<tr><td style="font-weight:600">'+labels[i]+'</td><td>'+fmt(tot)+'</td><td>'+fmt(hi)+'</td><td style="color:#f59e0b">'+hP+'%</td><td>'+fmt(en)+'</td><td style="color:#3b82f6">'+eP+'%</td></tr>'});
 funnelEvts.forEach(function(e){hiF.push((le[e]||{})['hi']||0);enF.push((le[e]||{})['en']||0)});
 document.querySelector('#tb_lang tbody').innerHTML=tb;
-Plotly.newPlot('c_lang',[{x:FL,y:hiF,name:'Hindi',type:'bar',marker:{color:'#f59e0b'}},{x:FL,y:enF,name:'English',type:'bar',marker:{color:'#3b82f6'}}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Users'}}),RC);
+var hiT=hiF.reduce(function(a,b){return a+b},0)||1,enT=enF.reduce(function(a,b){return a+b},0)||1;
+Plotly.newPlot('c_lang',[{x:FL,y:hiF,name:'Hindi',type:'bar',marker:{color:'#f59e0b'},text:hiF.map(function(v){var inst=hiF[0]||1;return fmt(v)+' ('+Math.round(v/inst*1000)/10+'%)'}),textposition:'outside'},{x:FL,y:enF,name:'English',type:'bar',marker:{color:'#3b82f6'},text:enF.map(function(v){var inst=enF[0]||1;return fmt(v)+' ('+Math.round(v/inst*1000)/10+'%)'}),textposition:'outside'}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
 var hB=hiF[0]||1,eB=enF[0]||1;
 Plotly.newPlot('c_lconv',[{x:FL,y:hiF.map(function(v,i){return i===0?100:Math.round(v/hB*1000)/10}),name:'Hindi %',type:'scatter',mode:'lines+markers',line:{color:'#f59e0b',width:3}},{x:FL,y:enF.map(function(v,i){return i===0?100:Math.round(v/eB*1000)/10}),name:'English %',type:'scatter',mode:'lines+markers',line:{color:'#3b82f6',width:3}}],L({yaxis:{gridcolor:'#334155',title:'% of Install Base'}}),RC);
 };
@@ -559,7 +560,7 @@ var kh='<div class="kpi orange"><div class="v">'+fmt(total)+'</div><div class="l
 t3.forEach(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;kh+='<div class="kpi"><div class="v">'+fmt(r.u)+'</div><div class="l">'+r.p+' ('+ln+')</div></div>'});
 document.getElementById('k7').innerHTML=kh;
 var t10=aLOC.slice(0,10),px=t10.map(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;return r.p+' ('+ln+')'}),uy=t10.map(function(r){return r.u}),cs=t10.map(function(r){return r.l==='hi'?'#f59e0b':r.l==='en'?'#3b82f6':'#94a3b8'});
-Plotly.newPlot('c_loc',[{x:px,y:uy,type:'bar',marker:{color:cs},text:uy.map(function(v){return fmt(v)}),textposition:'outside'}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Users'},margin:{t:30,b:120,l:60,r:20}}),RC);
+Plotly.newPlot('c_loc',[{x:px,y:uy,type:'bar',marker:{color:cs},text:uy.map(function(v){return fmt(v)+' ('+Math.round(v/total*1000)/10+'%)'}),textposition:'outside'}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Unique Users'},margin:{t:30,b:120,l:60,r:20}}),RC);
 var tb='';aLOC.forEach(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;tb+='<tr><td>'+r.p+'</td><td>'+ln+'</td><td>'+fmt(r.u)+'</td></tr>'});
 document.querySelector('#tb_loc tbody').innerHTML=tb;
 };
@@ -568,18 +569,19 @@ window.rt8=function(){
 var fLC=filtArr(LC);
 // Compute summary from filtered data
 var fLCS={};fLC.forEach(function(r){fLCS[r.l]=(fLCS[r.l]||0)+r.u});
-var toEn=fLCS['en']||0,toHi=fLCS['hi']||0,toUnk=fLCS['unknown']||0,totalU=toEn+toHi+toUnk;
+var toEn=fLCS['en']||0,toHi=fLCS['hi']||0,totalU=toEn+toHi;
+var enPct=totalU>0?Math.round(toEn/totalU*1000)/10:0,hiPct=totalU>0?Math.round(toHi/totalU*1000)/10:0;
 document.getElementById('k8').innerHTML=
-'<div class="kpi purple"><div class="v">'+fmt(totalU)+'</div><div class="l">Total Users Changed Lang</div></div>'+
-'<div class="kpi"><div class="v">'+fmt(toEn)+'</div><div class="l">Switched to English</div></div>'+
-'<div class="kpi orange"><div class="v">'+fmt(toHi)+'</div><div class="l">Switched to Hindi</div></div>'+
-'<div class="kpi"><div class="v">'+fmt(toUnk)+'</div><div class="l">Unknown Language</div></div>';
+'<div class="kpi purple"><div class="v">'+fmt(totalU)+'</div><div class="l">Total Unique Users Changed Lang</div></div>'+
+'<div class="kpi"><div class="v">'+fmt(toEn)+' ('+enPct+'%)</div><div class="l">Switched to English</div></div>'+
+'<div class="kpi orange"><div class="v">'+fmt(toHi)+' ('+hiPct+'%)</div><div class="l">Switched to Hindi</div></div>';
 // Aggregate by page
 var pg={};fLC.forEach(function(r){if(!pg[r.p])pg[r.p]={u:0,hi:0,en:0,unk:0,c:0};pg[r.p].u+=r.u;pg[r.p].c+=r.c;if(r.l==='hi')pg[r.p].hi+=r.u;else if(r.l==='en')pg[r.p].en+=r.u;else pg[r.p].unk+=r.u});
 var pArr=Object.keys(pg).map(function(p){return{p:p,u:pg[p].u,hi:pg[p].hi,en:pg[p].en,unk:pg[p].unk,c:pg[p].c}}).sort(function(a,b){return b.u-a.u});
 var top10=pArr.slice(0,10);
-Plotly.newPlot('c_lcpage',[{y:top10.map(function(r){return r.p}).reverse(),x:top10.map(function(r){return r.u}).reverse(),type:'bar',orientation:'h',marker:{color:'#a855f7'},text:top10.map(function(r){return fmt(r.u)}).reverse(),textposition:'outside'}],L({showlegend:false,margin:{t:20,b:40,l:200,r:60},xaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
-Plotly.newPlot('c_lclang',[{x:top10.map(function(r){return r.p}),y:top10.map(function(r){return r.hi}),name:'To Hindi',type:'bar',marker:{color:'#f59e0b'}},{x:top10.map(function(r){return r.p}),y:top10.map(function(r){return r.en}),name:'To English',type:'bar',marker:{color:'#3b82f6'}}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Users'},margin:{t:30,b:120,l:60,r:20}}),RC);
+var pgTotal=pArr.reduce(function(a,r){return a+r.u},0)||1;
+Plotly.newPlot('c_lcpage',[{y:top10.map(function(r){return r.p}).reverse(),x:top10.map(function(r){return r.u}).reverse(),type:'bar',orientation:'h',marker:{color:'#a855f7'},text:top10.map(function(r){return fmt(r.u)+' ('+Math.round(r.u/pgTotal*1000)/10+'%)'}).reverse(),textposition:'outside'}],L({showlegend:false,margin:{t:20,b:40,l:200,r:80},xaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
+Plotly.newPlot('c_lclang',[{x:top10.map(function(r){return r.p}),y:top10.map(function(r){return r.hi}),name:'To Hindi',type:'bar',marker:{color:'#f59e0b'},text:top10.map(function(r){return fmt(r.hi)+' ('+Math.round(r.hi/(r.u||1)*1000)/10+'%)'}),textposition:'outside'},{x:top10.map(function(r){return r.p}),y:top10.map(function(r){return r.en}),name:'To English',type:'bar',marker:{color:'#3b82f6'},text:top10.map(function(r){return fmt(r.en)+' ('+Math.round(r.en/(r.u||1)*1000)/10+'%)'}),textposition:'outside'}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Unique Users'},margin:{t:30,b:120,l:60,r:20}}),RC);
 // Table - aggregate filtered data for table display
 var tbl={};fLC.forEach(function(r){var k=r.p+'|'+r.l;if(!tbl[k])tbl[k]={p:r.p,l:r.l,c:0,u:0};tbl[k].c+=r.c;tbl[k].u+=r.u});
 var tblArr=Object.values(tbl).sort(function(a,b){return b.u-a.u});
