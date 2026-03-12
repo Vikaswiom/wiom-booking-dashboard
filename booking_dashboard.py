@@ -82,51 +82,6 @@ for r in cohort_rows:
     })
 
 # =====================================================================
-# QUERY 2: Language by event (direct query, no heavy JOIN)
-# =====================================================================
-print("Fetching language breakdown...")
-q2 = """SELECT EVENT_NAME,
-  COALESCE(NULLIF(TRY_PARSE_JSON(PROPERTIES):"event_props.language"::STRING,''), 'unknown') as language,
-  CAST(TIMESTAMP AS DATE) as event_date,
-  COUNT(DISTINCT USER_ID) as unique_users
-FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER
-WHERE EVENT_NAME IN ('App Installed','booking_homepage_loaded','serviceable_page_loaded',
-'unserviceable_page_loaded','how_does_it_work_clicked','how_to_get_started_clicked',
-'cost_today_clicked','pay_100_to_move_forward_clicked','booking_fee_captured','choose_different_location_clicked')
-AND TIMESTAMP >= '2026-01-26'
-GROUP BY EVENT_NAME, language, event_date ORDER BY event_date, EVENT_NAME"""
-_, lang_rows = run_query(q2)
-lang_data = []
-for r in lang_rows:
-    lang = r[1] if r[1] in ('hi', 'en') else 'hi'
-    lang_data.append({'e': r[0], 'l': lang, 'd': r[2][:10], 'u': r[3]})
-# Merge duplicates after normalization
-lang_merged = {}
-for r in lang_data:
-    key = (r['e'], r['l'], r['d'])
-    lang_merged[key] = lang_merged.get(key, 0) + r['u']
-lang_data = [{'e': k[0], 'l': k[1], 'd': k[2], 'u': v} for k, v in lang_merged.items()]
-
-# For booking_fee_captured: override with pay_100 language (previous screen)
-print("Fetching booking_fee language from pay_100...")
-q2b = """SELECT
-  COALESCE(NULLIF(TRY_PARSE_JSON(c2.PROPERTIES):"event_props.language"::STRING,''), 'hi') as lang,
-  CAST(c1.TIMESTAMP AS DATE) as event_date,
-  COUNT(DISTINCT c1.USER_ID) as users
-FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER c1
-INNER JOIN PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER c2
-  ON c1.USER_ID = c2.USER_ID
-  AND c2.EVENT_NAME = 'pay_100_to_move_forward_clicked'
-  AND c2.TIMESTAMP >= '2026-01-26'
-WHERE c1.EVENT_NAME = 'booking_fee_captured' AND c1.TIMESTAMP >= '2026-01-26'
-GROUP BY lang, event_date ORDER BY event_date"""
-_, fee_lang_rows = run_query(q2b)
-lang_data = [r for r in lang_data if r['e'] != 'booking_fee_captured']
-for r in fee_lang_rows:
-    lang = r[0] if r[0] in ('hi', 'en') else 'hi'
-    lang_data.append({'e': 'booking_fee_captured', 'l': lang, 'd': r[1][:10], 'u': r[2]})
-
-# =====================================================================
 # QUERY 3: Location change page + language (direct query)
 # =====================================================================
 print("Fetching location change breakdown...")
@@ -338,10 +293,9 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 <div class="tab" onclick="st(3)">Daily Trends</div>
 <div class="tab" onclick="st(4)">Month-wise</div>
 <div class="tab" onclick="st(5)">Serviceability</div>
-<div class="tab" onclick="st(6)">Language Analysis</div>
-<div class="tab" onclick="st(7)">Location Changes</div>
-<div class="tab" onclick="st(8)">Language Change Behavior</div>
-<div class="tab" onclick="st(9)">Funnel Comparison</div>
+<div class="tab" onclick="st(6)">Location Changes</div>
+<div class="tab" onclick="st(7)">Language Change Behavior</div>
+<div class="tab" onclick="st(8)">Funnel Comparison</div>
 </div>
 
 <div class="tc active" id="t0">
@@ -399,22 +353,15 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 </div>
 
 <div class="tc" id="t6">
-<div class="ib"><h3>What does this show?</h3><ul><li>Which <strong>language</strong> users are on at each funnel step</li><li>Users can change language on any page — this captures language at event time</li><li>Compare Hindi vs English funnel conversion rates</li></ul></div>
-<div class="cc"><div class="ct">Hindi vs English at Each Step (Unique Users)</div><div id="c_lang" style="height:450px"></div></div>
-<div class="cc"><div class="ct">Language Breakdown (Unique Users)</div><div style="overflow-x:auto"><table id="tb_lang"><thead><tr><th>Event</th><th>Total Users</th><th>Hindi Users</th><th>Hindi %</th><th>English Users</th><th>English %</th></tr></thead><tbody></tbody></table></div></div>
-<div class="cc"><div class="ct">Hindi vs English Conversion % (Install = 100%)</div><div id="c_lconv" style="height:400px"></div></div>
-</div>
-
-<div class="tc" id="t7">
 <div class="ib"><h3>What does this show?</h3><ul><li>On which <strong>page</strong> users click "Choose Different Location"</li><li>What <strong>language</strong> they use when changing location</li></ul></div>
-<div class="kg" id="k7"></div>
+<div class="kg" id="k6"></div>
 <div class="cc"><div class="ct">Location Change by Page + Language (Unique Users)</div><div id="c_loc" style="height:400px"></div></div>
 <div class="cc"><div class="ct">Detail Table</div><div style="overflow-x:auto"><table id="tb_loc"><thead><tr><th>Page</th><th>Language</th><th>Unique Users</th></tr></thead><tbody></tbody></table></div></div>
 </div>
 
-<div class="tc" id="t8">
+<div class="tc" id="t7">
 <div class="ib"><h3>What does this show?</h3><ul><li>On which <strong>screen/page</strong> users change their language most often</li><li>Whether users switch <strong>to Hindi</strong> or <strong>to English</strong></li><li>Helps understand language preference behavior across the booking flow</li></ul></div>
-<div class="kg" id="k8"></div>
+<div class="kg" id="k7"></div>
 <div class="g2">
 <div class="cc"><div class="ct">Language Changes by Page - Top 10 (Unique Users)</div><div id="c_lcpage" style="height:400px"></div></div>
 <div class="cc"><div class="ct">Switch To Hindi vs English by Page (Unique Users)</div><div id="c_lclang" style="height:400px"></div></div>
@@ -422,7 +369,7 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 <div class="cc"><div class="ct">Language Change Detail</div><div style="overflow-x:auto"><table id="tb_lc"><thead><tr><th>Page</th><th>Switched To</th><th>Total Events</th><th>Unique Users</th></tr></thead><tbody></tbody></table></div></div>
 </div>
 
-<div class="tc" id="t9">
+<div class="tc" id="t8">
 <div class="ib"><h3>What does this show?</h3><ul><li>Compare <strong>two different date ranges</strong> side-by-side to see funnel changes over time</li><li>Compare <strong>two app versions</strong> to see which version performs better</li><li>Green = improvement, Red = decline</li></ul></div>
 
 <div class="cc">
@@ -454,7 +401,6 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 
 <script>
 var CD = """ + json.dumps(cohort_data) + """;
-var LD = """ + json.dumps(lang_data) + """;
 var LOC = """ + json.dumps(loc_data) + """;
 var LC = """ + json.dumps(langchange_data) + """;
 var RD = """ + json.dumps(recovery_data) + """;
@@ -590,24 +536,6 @@ Plotly.newPlot('c_recbar',[{x:rweeks,y:rweeks.map(function(w){return rwk[w].u}),
 };
 
 window.rt6=function(){
-var fLD=filtArr(LD);
-var le={};fLD.forEach(function(r){if(!le[r.e])le[r.e]={};le[r.e][r.l]=(le[r.e][r.l]||0)+r.u});
-var evts=['App Installed','booking_homepage_loaded','serviceable_page_loaded','unserviceable_page_loaded','how_does_it_work_clicked','how_to_get_started_clicked','cost_today_clicked','pay_100_to_move_forward_clicked','booking_fee_captured','choose_different_location_clicked'];
-var labels=['App Installed','Homepage Loaded','Serviceable','Unserviceable','How It Works','Get Started','Cost Today','Pay 100','Booking','Diff Location'];
-var funnelEvts=['App Installed','booking_homepage_loaded','serviceable_page_loaded','how_does_it_work_clicked','cost_today_clicked','pay_100_to_move_forward_clicked','booking_fee_captured'];
-var tb='',hiF=[],enF=[];
-evts.forEach(function(e,i){var lg=le[e]||{},hi=lg['hi']||0,en=lg['en']||0,tot=hi+en;
-var hP=tot>0?Math.round(hi/tot*1000)/10:0,eP=tot>0?Math.round(en/tot*1000)/10:0;
-tb+='<tr><td style="font-weight:600">'+labels[i]+'</td><td>'+fmt(tot)+'</td><td>'+fmt(hi)+'</td><td style="color:#f59e0b">'+hP+'%</td><td>'+fmt(en)+'</td><td style="color:#3b82f6">'+eP+'%</td></tr>'});
-funnelEvts.forEach(function(e){hiF.push((le[e]||{})['hi']||0);enF.push((le[e]||{})['en']||0)});
-document.querySelector('#tb_lang tbody').innerHTML=tb;
-var hiT=hiF.reduce(function(a,b){return a+b},0)||1,enT=enF.reduce(function(a,b){return a+b},0)||1;
-Plotly.newPlot('c_lang',[{x:FL,y:hiF,name:'Hindi',type:'bar',marker:{color:'#f59e0b'},text:hiF.map(function(v){var inst=hiF[0]||1;return fmt(v)+' ('+Math.round(v/inst*1000)/10+'%)'}),textposition:'outside'},{x:FL,y:enF,name:'English',type:'bar',marker:{color:'#3b82f6'},text:enF.map(function(v){var inst=enF[0]||1;return fmt(v)+' ('+Math.round(v/inst*1000)/10+'%)'}),textposition:'outside'}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
-var hB=hiF[0]||1,eB=enF[0]||1;
-Plotly.newPlot('c_lconv',[{x:FL,y:hiF.map(function(v,i){return i===0?100:Math.round(v/hB*1000)/10}),name:'Hindi %',type:'scatter',mode:'lines+markers',line:{color:'#f59e0b',width:3}},{x:FL,y:enF.map(function(v,i){return i===0?100:Math.round(v/eB*1000)/10}),name:'English %',type:'scatter',mode:'lines+markers',line:{color:'#3b82f6',width:3}}],L({yaxis:{gridcolor:'#334155',title:'% of Install Base'}}),RC);
-};
-
-window.rt7=function(){
 var fLOC=filtArr(LOC);
 // Aggregate filtered data by page+lang
 var lm={};fLOC.forEach(function(r){var k=r.p+'|'+r.l;lm[k]=(lm[k]||0)+r.u});
@@ -615,20 +543,20 @@ var aLOC=Object.keys(lm).map(function(k){var p=k.split('|');return{p:p[0],l:p[1]
 var t3=aLOC.slice(0,3),total=0;aLOC.forEach(function(r){total+=r.u});
 var kh='<div class="kpi orange"><div class="v">'+fmt(total)+'</div><div class="l">Total Location Changes</div></div>';
 t3.forEach(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;kh+='<div class="kpi"><div class="v">'+fmt(r.u)+'</div><div class="l">'+r.p+' ('+ln+')</div></div>'});
-document.getElementById('k7').innerHTML=kh;
+document.getElementById('k6').innerHTML=kh;
 var t10=aLOC.slice(0,10),px=t10.map(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;return r.p+' ('+ln+')'}),uy=t10.map(function(r){return r.u}),cs=t10.map(function(r){return r.l==='hi'?'#f59e0b':r.l==='en'?'#3b82f6':'#94a3b8'});
 Plotly.newPlot('c_loc',[{x:px,y:uy,type:'bar',marker:{color:cs},text:uy.map(function(v){return fmt(v)+' ('+Math.round(v/total*1000)/10+'%)'}),textposition:'outside'}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Unique Users'},margin:{t:30,b:120,l:60,r:20}}),RC);
 var tb='';aLOC.forEach(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;tb+='<tr><td>'+r.p+'</td><td>'+ln+'</td><td>'+fmt(r.u)+'</td></tr>'});
 document.querySelector('#tb_loc tbody').innerHTML=tb;
 };
 
-window.rt8=function(){
+window.rt7=function(){
 var fLC=filtArr(LC);
 // Compute summary from filtered data
 var fLCS={};fLC.forEach(function(r){fLCS[r.l]=(fLCS[r.l]||0)+r.u});
 var toEn=fLCS['en']||0,toHi=fLCS['hi']||0,totalU=toEn+toHi;
 var enPct=totalU>0?Math.round(toEn/totalU*1000)/10:0,hiPct=totalU>0?Math.round(toHi/totalU*1000)/10:0;
-document.getElementById('k8').innerHTML=
+document.getElementById('k7').innerHTML=
 '<div class="kpi purple"><div class="v">'+fmt(totalU)+'</div><div class="l">Total Unique Users Changed Lang</div></div>'+
 '<div class="kpi"><div class="v">'+fmt(toEn)+' ('+enPct+'%)</div><div class="l">Switched to English</div></div>'+
 '<div class="kpi orange"><div class="v">'+fmt(toHi)+' ('+hiPct+'%)</div><div class="l">Switched to Hindi</div></div>';
@@ -647,7 +575,7 @@ document.querySelector('#tb_lc tbody').innerHTML=tb;
 };
 
 // Init comparison tab
-window.rt9=function(){
+window.rt8=function(){
 var cv1=document.getElementById('cv1'),cv2=document.getElementById('cv2');
 if(cv1.options.length<=1){cv1.innerHTML='';cv2.innerHTML='';
 AV.forEach(function(v){cv1.innerHTML+='<option value="'+v+'">'+v+'</option>';cv2.innerHTML+='<option value="'+v+'">'+v+'</option>'});
