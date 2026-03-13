@@ -82,22 +82,48 @@ for r in cohort_rows:
     })
 
 # =====================================================================
-# QUERY 4: Language change behavior - on which screen users change
+# QUERY 4: Language at each funnel step (from original 10 events)
 # =====================================================================
-print("Fetching language change behavior...")
-q4 = """SELECT
-  COALESCE(NULLIF(TRY_PARSE_JSON(PROPERTIES):"event_props.page_name"::STRING,''), 'unknown') as page,
-  COALESCE(NULLIF(TRY_PARSE_JSON(PROPERTIES):"event_props.language"::STRING,''), 'unknown') as to_lang,
+print("Fetching language at each funnel step...")
+q4 = """SELECT EVENT_NAME,
+  COALESCE(NULLIF(TRY_PARSE_JSON(PROPERTIES):"event_props.language"::STRING,''), 'hi') as language,
   CAST(TIMESTAMP AS DATE) as event_date,
-  COUNT(*) as total_changes,
   COUNT(DISTINCT USER_ID) as unique_users
 FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER
-WHERE EVENT_NAME = 'language_changed' AND TIMESTAMP >= '2026-01-26'
-GROUP BY page, to_lang, event_date ORDER BY event_date"""
-_, langchange_rows = run_query(q4)
-langchange_data = [{'p': r[0], 'l': r[1], 'd': r[2][:10], 'c': r[3], 'u': r[4]} for r in langchange_rows]
-# Filter out unknown and hamburger (not real pages)
-langchange_data = [r for r in langchange_data if r['p'] != 'unknown' and 'hamburger' not in r['p'].lower()]
+WHERE EVENT_NAME IN ('App Installed','booking_homepage_loaded','serviceable_page_loaded',
+'unserviceable_page_loaded','how_does_it_work_clicked','how_to_get_started_clicked',
+'cost_today_clicked','pay_100_to_move_forward_clicked','choose_different_location_clicked')
+AND TIMESTAMP >= '2026-01-26'
+GROUP BY EVENT_NAME, language, event_date ORDER BY event_date, EVENT_NAME"""
+_, lang_step_rows = run_query(q4)
+lang_step_data = []
+for r in lang_step_rows:
+    lang = r[1] if r[1] in ('hi', 'en') else 'hi'
+    lang_step_data.append({'e': r[0], 'l': lang, 'd': r[2][:10], 'u': r[3]})
+# Merge duplicates after unknown->hi normalization
+lang_merged = {}
+for r in lang_step_data:
+    key = (r['e'], r['l'], r['d'])
+    lang_merged[key] = lang_merged.get(key, 0) + r['u']
+lang_step_data = [{'e': k[0], 'l': k[1], 'd': k[2], 'u': v} for k, v in lang_merged.items()]
+
+# For booking_fee_captured: use language from pay_100 event
+print("Fetching booking_fee language from pay_100...")
+q4b = """SELECT
+  COALESCE(NULLIF(TRY_PARSE_JSON(c2.PROPERTIES):"event_props.language"::STRING,''), 'hi') as lang,
+  CAST(c1.TIMESTAMP AS DATE) as event_date,
+  COUNT(DISTINCT c1.USER_ID) as users
+FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER c1
+INNER JOIN PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER c2
+  ON c1.USER_ID = c2.USER_ID
+  AND c2.EVENT_NAME = 'pay_100_to_move_forward_clicked'
+  AND c2.TIMESTAMP >= '2026-01-26'
+WHERE c1.EVENT_NAME = 'booking_fee_captured' AND c1.TIMESTAMP >= '2026-01-26'
+GROUP BY lang, event_date ORDER BY event_date"""
+_, fee_lang_rows = run_query(q4b)
+for r in fee_lang_rows:
+    lang = r[0] if r[0] in ('hi', 'en') else 'hi'
+    lang_step_data.append({'e': 'booking_fee_captured', 'l': lang, 'd': r[1][:10], 'u': r[2]})
 
 # =====================================================================
 # QUERY 5: Distinct app versions
@@ -337,15 +363,14 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 </div>
 
 <div class="tc" id="t6">
-<div class="ib"><h3>What does this show?</h3><ul><li>The app <strong>defaults to Hindi</strong>. This tab shows where users change their language during the booking flow.</li><li><strong>Hindi → English</strong>: Users who switched from Hindi to English (shown as "Switched to English")</li><li><strong>English → Hindi</strong>: Users who switched back to Hindi (shown as "Switched to Hindi")</li><li>Helps identify which <strong>screens trigger language switches</strong> and whether users prefer Hindi or English</li></ul></div>
+<div class="ib"><h3>What does this show?</h3><ul><li>The app <strong>defaults to Hindi</strong>. Booking homepage always loads in Hindi.</li><li>This tab shows what <strong>language users are on at each funnel step</strong> (Unique Users).</li><li>If Hindi % drops from one step to the next, it means users <strong>switched to English</strong> between those steps.</li><li>Helps identify <strong>where in the funnel</strong> users prefer English over Hindi.</li></ul></div>
 <div class="kg" id="k6"></div>
-<div class="cc"><div class="ct">Overall: Who Switches Where? (Unique Users)</div><div id="c_lcsankey" style="height:400px"></div></div>
 <div class="g2">
-<div class="cc"><div class="ct">Top Pages Where Users Switch Language (Unique Users)</div><div id="c_lcpage" style="height:420px"></div></div>
-<div class="cc"><div class="ct">Hindi → English vs English → Hindi by Page (Unique Users)</div><div id="c_lclang" style="height:420px"></div></div>
+<div class="cc"><div class="ct">Language at Each Funnel Step (Unique Users)</div><div id="c_langbar" style="height:450px"></div></div>
+<div class="cc"><div class="ct">Hindi % vs English % Across Funnel</div><div id="c_langpct" style="height:450px"></div></div>
 </div>
-<div class="cc"><div class="ct">Weekly Language Switch Trend (Unique Users)</div><div id="c_lctrend" style="height:350px"></div></div>
-<div class="cc"><div class="ct">Page-wise Breakdown</div><div style="overflow-x:auto"><table id="tb_lc"><thead><tr><th>Page</th><th>Total Users</th><th>→ English</th><th>→ English %</th><th>→ Hindi</th><th>→ Hindi %</th><th>Total Events</th></tr></thead><tbody></tbody></table></div></div>
+<div class="cc"><div class="ct">Where Do Users Switch? (Hindi % Change Between Steps)</div><div id="c_langshift" style="height:380px"></div></div>
+<div class="cc"><div class="ct">Language Breakdown by Funnel Step</div><div style="overflow-x:auto"><table id="tb_lc"><thead><tr><th>Funnel Step</th><th>Total Users</th><th>Hindi Users</th><th>Hindi %</th><th>English Users</th><th>English %</th><th>Hindi % Change</th></tr></thead><tbody></tbody></table></div></div>
 </div>
 
 <div class="tc" id="t7">
@@ -380,7 +405,7 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 
 <script>
 var CD = """ + json.dumps(cohort_data) + """;
-var LC = """ + json.dumps(langchange_data) + """;
+var LS = """ + json.dumps(lang_step_data) + """;
 var RD = """ + json.dumps(recovery_data) + """;
 var AV = """ + json.dumps(app_versions) + """;
 var VD = """ + json.dumps(version_data) + """;
@@ -514,46 +539,47 @@ Plotly.newPlot('c_recbar',[{x:rweeks,y:rweeks.map(function(w){return rwk[w].u}),
 };
 
 window.rt6=function(){
-var fLC=filtArr(LC);
-// Aggregate totals
-var toEn=0,toHi=0,totEv=0;
-fLC.forEach(function(r){if(r.l==='en')toEn+=r.u;else if(r.l==='hi')toHi+=r.u;totEv+=r.c});
-var totalU=toEn+toHi;
-var enPct=totalU>0?Math.round(toEn/totalU*1000)/10:0,hiPct=totalU>0?Math.round(toHi/totalU*1000)/10:0;
+var fLS=filtArr(LS);
+// Event order for funnel
+var evtOrder=['App Installed','booking_homepage_loaded','serviceable_page_loaded','unserviceable_page_loaded','how_does_it_work_clicked','how_to_get_started_clicked','cost_today_clicked','pay_100_to_move_forward_clicked','booking_fee_captured','choose_different_location_clicked'];
+var evtLabels=['App Installed','Homepage Loaded','Serviceable Page','Unserviceable Page','How Does It Work','Get Started','Cost Today','Pay 100 Clicked','Booking Fee Paid','Changed Location'];
+// Aggregate by event+lang
+var le={};fLS.forEach(function(r){if(!le[r.e])le[r.e]={hi:0,en:0};le[r.e][r.l]=(le[r.e][r.l]||0)+r.u});
+// Build arrays
+var hiArr=[],enArr=[],totArr=[],hiPcts=[],enPcts=[];
+evtOrder.forEach(function(e){var d=le[e]||{hi:0,en:0},hi=d.hi||0,en=d.en||0,tot=hi+en;
+hiArr.push(hi);enArr.push(en);totArr.push(tot);
+hiPcts.push(tot>0?Math.round(hi/tot*1000)/10:0);
+enPcts.push(tot>0?Math.round(en/tot*1000)/10:0)});
 // KPIs
+var totalHi=hiArr.reduce(function(a,b){return a+b},0),totalEn=enArr.reduce(function(a,b){return a+b},0),totalAll=totalHi+totalEn;
+var homepageHiPct=hiPcts[1],bookingEnPct=enPcts[8];
 document.getElementById('k6').innerHTML=
-'<div class="kpi purple"><div class="v">'+fmt(totalU)+'</div><div class="l">Total Users Who Changed Language</div></div>'+
-'<div class="kpi"><div class="v">'+fmt(toEn)+'</div><div class="l">Hindi → English ('+enPct+'% of all switches)</div></div>'+
-'<div class="kpi orange"><div class="v">'+fmt(toHi)+'</div><div class="l">English → Hindi ('+hiPct+'% of all switches)</div></div>'+
-'<div class="kpi red"><div class="v">'+fmt(totEv)+'</div><div class="l">Total Switch Events (some users switch multiple times)</div></div>';
-// Aggregate by page
-var pg={};fLC.forEach(function(r){if(!pg[r.p])pg[r.p]={u:0,hi:0,en:0,c:0};pg[r.p].u+=r.u;pg[r.p].c+=r.c;if(r.l==='hi')pg[r.p].hi+=r.u;else if(r.l==='en')pg[r.p].en+=r.u});
-var pArr=Object.keys(pg).map(function(p){return{p:p,u:pg[p].u,hi:pg[p].hi,en:pg[p].en,c:pg[p].c}}).sort(function(a,b){return b.u-a.u});
-var top8=pArr.slice(0,8);
-// Sankey: Pages -> To English / To Hindi
-var sLbl=['Hindi → English ('+fmt(toEn)+')','English → Hindi ('+fmt(toHi)+')'];
-var sPages=top8.map(function(r){return r.p});
-var allLbl=sPages.concat(sLbl);
-var sSource=[],sTarget=[],sValue=[],sColor=[];
-top8.forEach(function(r,i){
-if(r.en>0){sSource.push(i);sTarget.push(sPages.length);sValue.push(r.en);sColor.push('rgba(59,130,246,0.4)');}
-if(r.hi>0){sSource.push(i);sTarget.push(sPages.length+1);sValue.push(r.hi);sColor.push('rgba(249,115,22,0.4)');}
-});
-var nodeColors=sPages.map(function(){return '#E91E63'}).concat(['#3b82f6','#f59e0b']);
-Plotly.newPlot('c_lcsankey',[{type:'sankey',orientation:'h',node:{pad:20,thickness:25,line:{color:'#4a2535',width:1},label:allLbl,color:nodeColors},link:{source:sSource,target:sTarget,value:sValue,color:sColor}}],L({margin:{t:20,b:20,l:10,r:10}}),RC);
-// Top pages horizontal stacked bar (100% stacked to show split)
-var pgTotal=pArr.reduce(function(a,r){return a+r.u},0)||1;
-Plotly.newPlot('c_lcpage',[{y:top8.map(function(r){return r.p}).reverse(),x:top8.map(function(r){return r.en}).reverse(),name:'→ English',type:'bar',orientation:'h',marker:{color:'#3b82f6'},text:top8.map(function(r){return fmt(r.en)+' ('+Math.round(r.en/(r.u||1)*1000)/10+'%)'}).reverse(),textposition:'auto',textfont:{size:10}},{y:top8.map(function(r){return r.p}).reverse(),x:top8.map(function(r){return r.hi}).reverse(),name:'→ Hindi',type:'bar',orientation:'h',marker:{color:'#f59e0b'},text:top8.map(function(r){return fmt(r.hi)+' ('+Math.round(r.hi/(r.u||1)*1000)/10+'%)'}).reverse(),textposition:'auto',textfont:{size:10}}],L({barmode:'stack',showlegend:true,margin:{t:20,b:40,l:200,r:80},xaxis:{gridcolor:'#4a2535',title:'Unique Users'}}),RC);
-// Per-page % split chart (what % went to English vs Hindi on each page)
-Plotly.newPlot('c_lclang',[{y:top8.map(function(r){return r.p}).reverse(),x:top8.map(function(r){return r.u>0?Math.round(r.en/r.u*1000)/10:0}).reverse(),name:'% → English',type:'bar',orientation:'h',marker:{color:'#3b82f6'},text:top8.map(function(r){var p=r.u>0?Math.round(r.en/r.u*1000)/10:0;return p+'%'}).reverse(),textposition:'auto',textfont:{size:11}},{y:top8.map(function(r){return r.p}).reverse(),x:top8.map(function(r){return r.u>0?Math.round(r.hi/r.u*1000)/10:0}).reverse(),name:'% → Hindi',type:'bar',orientation:'h',marker:{color:'#f59e0b'},text:top8.map(function(r){var p=r.u>0?Math.round(r.hi/r.u*1000)/10:0;return p+'%'}).reverse(),textposition:'auto',textfont:{size:11}}],L({barmode:'stack',showlegend:true,margin:{t:20,b:40,l:200,r:80},xaxis:{gridcolor:'#4a2535',title:'% of Users on Page',range:[0,100]}}),RC);
-// Weekly trend
-var wk={};fLC.forEach(function(r){var d=new Date(r.d),dy=d.getDay(),df=d.getDate()-dy+(dy===0?-6:1),mon=new Date(d.setDate(df)),w=mon.toISOString().slice(0,10);if(!wk[w])wk[w]={en:0,hi:0};if(r.l==='en')wk[w].en+=r.u;else if(r.l==='hi')wk[w].hi+=r.u});
-var weeks=Object.keys(wk).sort();
-Plotly.newPlot('c_lctrend',[{x:weeks,y:weeks.map(function(w){return wk[w].en}),name:'Hindi → English',type:'scatter',mode:'lines+markers',line:{color:'#3b82f6',width:3},marker:{size:7},text:weeks.map(function(w){var t=wk[w].en+wk[w].hi;return fmt(wk[w].en)+' ('+Math.round(wk[w].en/(t||1)*1000)/10+'%)'})},{x:weeks,y:weeks.map(function(w){return wk[w].hi}),name:'English → Hindi',type:'scatter',mode:'lines+markers',line:{color:'#f59e0b',width:3},marker:{size:7},text:weeks.map(function(w){var t=wk[w].en+wk[w].hi;return fmt(wk[w].hi)+' ('+Math.round(wk[w].hi/(t||1)*1000)/10+'%)'})},{x:weeks,y:weeks.map(function(w){return wk[w].en+wk[w].hi}),name:'Total Switches',type:'scatter',mode:'lines+markers',line:{color:'#E91E63',width:2,dash:'dot'},marker:{size:5}}],L({yaxis:{gridcolor:'#4a2535',title:'Unique Users'},xaxis:{gridcolor:'#4a2535',title:'Week'}}),RC);
-// Table - page-wise with clear columns
-var tb='';pArr.forEach(function(r){
-var enP=r.u>0?Math.round(r.en/r.u*1000)/10:0,hiP=r.u>0?Math.round(r.hi/r.u*1000)/10:0;
-tb+='<tr><td style="font-weight:600">'+r.p+'</td><td>'+fmt(r.u)+'</td><td>'+fmt(r.en)+'</td><td style="color:#3b82f6;font-weight:600">'+enP+'%</td><td>'+fmt(r.hi)+'</td><td style="color:#f59e0b;font-weight:600">'+hiP+'%</td><td>'+fmt(r.c)+'</td></tr>'});
+'<div class="kpi orange"><div class="v">'+hiPcts[1]+'%</div><div class="l">Hindi at Homepage (default)</div></div>'+
+'<div class="kpi"><div class="v">'+enPcts[2]+'%</div><div class="l">English at Serviceable Page</div></div>'+
+'<div class="kpi"><div class="v">'+enPcts[7]+'%</div><div class="l">English at Pay 100 Clicked</div></div>'+
+'<div class="kpi green"><div class="v">'+enPcts[8]+'%</div><div class="l">English at Booking Fee Paid</div></div>';
+// Bar chart: Hindi vs English at each step
+Plotly.newPlot('c_langbar',[{x:evtLabels,y:hiArr,name:'Hindi',type:'bar',marker:{color:'#f59e0b'},text:hiArr.map(function(v,i){return fmt(v)+' ('+hiPcts[i]+'%)'}),textposition:'auto',textfont:{size:9}},{x:evtLabels,y:enArr,name:'English',type:'bar',marker:{color:'#3b82f6'},text:enArr.map(function(v,i){return fmt(v)+' ('+enPcts[i]+'%)'}),textposition:'auto',textfont:{size:9}}],L({barmode:'stack',yaxis:{gridcolor:'#4a2535',title:'Unique Users'},margin:{t:30,b:130,l:60,r:20},xaxis:{gridcolor:'#4a2535',tickangle:-35}}),RC);
+// Line chart: Hindi % vs English % across funnel
+Plotly.newPlot('c_langpct',[{x:evtLabels,y:hiPcts,name:'Hindi %',type:'scatter',mode:'lines+markers+text',line:{color:'#f59e0b',width:3},marker:{size:8},text:hiPcts.map(function(v){return v+'%'}),textposition:'top center',textfont:{size:10}},{x:evtLabels,y:enPcts,name:'English %',type:'scatter',mode:'lines+markers+text',line:{color:'#3b82f6',width:3},marker:{size:8},text:enPcts.map(function(v){return v+'%'}),textposition:'top center',textfont:{size:10}}],L({yaxis:{gridcolor:'#4a2535',title:'% of Users at Step',range:[0,105]},margin:{t:30,b:130,l:60,r:20},xaxis:{gridcolor:'#4a2535',tickangle:-35}}),RC);
+// Shift chart: change in Hindi % from previous step
+var shiftLabels=[],shiftVals=[],shiftColors=[];
+for(var i=1;i<evtOrder.length;i++){
+var diff=Math.round((hiPcts[i]-hiPcts[i-1])*10)/10;
+shiftLabels.push(evtLabels[i-1]+' → '+evtLabels[i]);
+shiftVals.push(diff);
+shiftColors.push(diff<0?'#3b82f6':'#f59e0b')}
+Plotly.newPlot('c_langshift',[{x:shiftLabels,y:shiftVals,type:'bar',marker:{color:shiftColors},text:shiftVals.map(function(v){return (v>0?'+':'')+v+'%'}),textposition:'outside',textfont:{size:10}}],L({yaxis:{gridcolor:'#4a2535',title:'Hindi % Change',zeroline:true,zerolinecolor:'#E91E63',zerolinewidth:2},margin:{t:30,b:140,l:60,r:20},xaxis:{gridcolor:'#4a2535',tickangle:-30},annotations:[{x:0.5,y:1.02,xref:'paper',yref:'paper',text:'<b>Blue bars = users moved to English | Orange bars = users moved to Hindi</b>',showarrow:false,font:{size:11,color:'#b89aaa'}}],showlegend:false}),RC);
+// Table
+var tb='',prevHiPct=null;
+evtOrder.forEach(function(e,i){var d=le[e]||{hi:0,en:0},hi=d.hi||0,en=d.en||0,tot=hi+en;
+var hP=tot>0?Math.round(hi/tot*1000)/10:0,eP=tot>0?Math.round(en/tot*1000)/10:0;
+var shift=prevHiPct!==null?Math.round((hP-prevHiPct)*10)/10:0;
+var shiftStr=prevHiPct===null?'—':(shift>0?'<span style="color:#f59e0b">+'+shift+'%</span>':'<span style="color:#3b82f6">'+shift+'%</span>');
+if(shift===0&&prevHiPct!==null)shiftStr='<span style="color:#b89aaa">0%</span>';
+tb+='<tr><td style="font-weight:600">'+evtLabels[i]+'</td><td>'+fmt(tot)+'</td><td>'+fmt(hi)+'</td><td style="color:#f59e0b;font-weight:600">'+hP+'%</td><td>'+fmt(en)+'</td><td style="color:#3b82f6;font-weight:600">'+eP+'%</td><td>'+shiftStr+'</td></tr>';
+prevHiPct=hP});
 document.querySelector('#tb_lc tbody').innerHTML=tb;
 };
 
