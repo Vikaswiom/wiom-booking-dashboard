@@ -216,10 +216,10 @@ html = """<!DOCTYPE html>
 <title>WIOM Booking Flow Dashboard</title>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
-:root{--bg:#0f172a;--card:#1e293b;--border:#334155;--text:#e2e8f0;--muted:#94a3b8;--accent:#3b82f6;--green:#22c55e;--red:#ef4444;--orange:#f59e0b;--purple:#a855f7}
+:root{--bg:#1a0a12;--card:#2d1520;--border:#4a2535;--text:#f1e4ea;--muted:#b89aaa;--accent:#E91E63;--green:#22c55e;--red:#ef4444;--orange:#f59e0b;--purple:#a855f7}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text)}
-.header{background:linear-gradient(135deg,#1e3a5f,#0f172a);padding:24px 32px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.header{background:linear-gradient(135deg,#3d0f23,#1a0a12);padding:24px 32px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
 .header h1{font-size:24px;font-weight:700} .header h1 span{color:var(--accent)}
 .filter-bar{background:var(--card);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .filter-bar label{font-size:13px;color:var(--muted);font-weight:600}
@@ -231,29 +231,29 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .sep{width:1px;height:28px;background:var(--border);margin:0 4px}
 .tabs{display:flex;background:var(--card);border-bottom:2px solid var(--border);padding:0 24px;overflow-x:auto}
 .tab{padding:14px 24px;cursor:pointer;font-size:14px;font-weight:500;color:var(--muted);border-bottom:3px solid transparent;transition:all 0.2s;white-space:nowrap}
-.tab:hover{color:var(--text);background:rgba(59,130,246,0.1)}
+.tab:hover{color:var(--text);background:rgba(233,30,99,0.1)}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .tc{display:none;padding:24px 32px} .tc.active{display:block}
 .kg{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
 .kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center}
 .kpi .v{font-size:28px;font-weight:700;color:var(--accent)} .kpi .l{font-size:12px;color:var(--muted);margin-top:4px}
-.kpi.green .v{color:var(--green)} .kpi.red .v{color:var(--red)} .kpi.orange .v{color:var(--orange)} .kpi.purple .v{color:var(--purple)}
+.kpi.green .v{color:var(--green)} .kpi.red .v{color:var(--red)} .kpi.orange .v{color:var(--orange)} .kpi.purple .v{color:var(--purple)} .kpi.blue .v{color:#3b82f6}
 .cc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px}
 .ct{font-size:16px;font-weight:600;margin-bottom:12px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:20px} @media(max-width:900px){.g2{grid-template-columns:1fr}}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{background:#0f172a;color:var(--accent);padding:10px 12px;text-align:left;font-weight:600;position:sticky;top:0}
-td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:rgba(59,130,246,0.05)}
-.ib{background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(168,85,247,0.1));border:1px solid rgba(59,130,246,0.3);border-radius:12px;padding:20px;margin-bottom:20px}
+th{background:#1a0a12;color:var(--accent);padding:10px 12px;text-align:left;font-weight:600;position:sticky;top:0}
+td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:rgba(233,30,99,0.05)}
+.ib{background:linear-gradient(135deg,rgba(233,30,99,0.1),rgba(168,85,247,0.1));border:1px solid rgba(233,30,99,0.3);border-radius:12px;padding:20px;margin-bottom:20px}
 .ib h3{color:var(--accent);margin-bottom:10px;font-size:15px}
 .ib p,.ib li{color:var(--muted);font-size:13px;line-height:1.7} .ib ul{padding-left:20px}
-.refresh-btn{background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px}
-.refresh-btn:hover{transform:scale(1.05);box-shadow:0 4px 12px rgba(34,197,94,0.4)}
+.refresh-btn{background:linear-gradient(135deg,#E91E63,#C2185B);color:white;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px}
+.refresh-btn:hover{transform:scale(1.05);box-shadow:0 4px 12px rgba(233,30,99,0.4)}
 .refresh-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
 .refresh-status{color:var(--orange);font-size:12px;margin-top:4px;min-height:16px}
 .cmp-select{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px}
 .cmp-btn{background:var(--accent);color:white;border:none;border-radius:8px;padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer}
-.cmp-btn:hover{background:#2563eb}
+.cmp-btn:hover{background:#C2185B}
 .cmp-label{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:6px}
 .overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;justify-content:center;align-items:center}
 .overlay.show{display:flex}
@@ -341,7 +341,7 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 <div class="cc"><div class="ct">Location Actions</div><div id="c_locbar" style="height:350px"></div></div>
 </div>
 <div class="cc"><div class="ct">Weekly Trend</div><div id="c_strd" style="height:350px"></div></div>
-<div class="cc" style="margin-top:24px;border:1px solid rgba(34,197,94,0.3);background:linear-gradient(135deg,rgba(34,197,94,0.05),rgba(59,130,246,0.05))">
+<div class="cc" style="margin-top:24px;border:1px solid rgba(233,30,99,0.3);background:linear-gradient(135deg,rgba(233,30,99,0.05),rgba(168,85,247,0.05))">
 <div class="ct" style="color:#22c55e">Recovery Journey: Unserviceable → Changed Location → Got Serviceable → Booking Fee Paid</div>
 <p style="color:#94a3b8;font-size:12px;margin-bottom:16px">Users who first landed on an unserviceable page, then changed their location, got a serviceable page, and finally paid the booking fee (in sequential order by timestamp)</p>
 <div class="kg" id="k5r"></div>
@@ -419,7 +419,7 @@ var EK={'App Installed':'installs','booking_homepage_loaded':'homepage','service
 'choose_different_location_clicked':'diff_location'};
 
 var RC={responsive:true};
-function L(o){var b={paper_bgcolor:'#1e293b',plot_bgcolor:'#1e293b',font:{color:'#94a3b8',size:11},xaxis:{gridcolor:'#334155'},yaxis:{gridcolor:'#334155'},margin:{t:30,b:50,l:60,r:20},legend:{orientation:'h',y:-0.15},uniformtext:{minsize:8,mode:'hide'}};if(o)for(var k in o)b[k]=o[k];return b}
+function L(o){var b={paper_bgcolor:'#2d1520',plot_bgcolor:'#2d1520',font:{color:'#b89aaa',size:11},xaxis:{gridcolor:'#4a2535'},yaxis:{gridcolor:'#4a2535'},margin:{t:30,b:50,l:60,r:20},legend:{orientation:'h',y:-0.15},uniformtext:{minsize:8,mode:'hide'}};if(o)for(var k in o)b[k]=o[k];return b}
 function fmt(n){return n.toLocaleString()}
 
 var at=0;
@@ -462,7 +462,7 @@ document.getElementById('k0').innerHTML=
 '<div class="kpi purple"><div class="v">'+conv+'%</div><div class="l">Install to Booking %</div></div>'+
 '<div class="kpi orange"><div class="v">'+sR+'%</div><div class="l">Serviceable Rate %</div></div>'+
 '<div class="kpi red"><div class="v">'+uR+'%</div><div class="l">Unserviceable Rate %</div></div>';
-Plotly.newPlot('c_funnel',[{type:'funnel',y:FL,x:vals,textinfo:'value+percent initial',marker:{color:FC},connector:{line:{color:'#334155'}}}],L({margin:{t:20,b:20,l:180,r:80},showlegend:false}),RC);
+Plotly.newPlot('c_funnel',[{type:'funnel',y:FL,x:vals,textinfo:'value+percent initial',marker:{color:FC},connector:{line:{color:'#4a2535'}}}],L({margin:{t:20,b:20,l:180,r:80},showlegend:false}),RC);
 var tb='';AK.forEach(function(k,i){var u=s[k],pct=Math.round(u/inst*1000)/10;tb+='<tr><td>'+AL[i]+'</td><td>'+fmt(u)+'</td><td style="color:var(--accent);font-weight:600">'+pct+'%</td></tr>'});
 document.querySelector('#tb_summary tbody').innerHTML=tb;
 };
@@ -475,24 +475,24 @@ var lb=FL[i-1]+' -> '+FL[i];lbl.push(lb);cv.push(co);dr.push(dp);
 var clr=co>60?'#22c55e':co>30?'#f59e0b':'#ef4444';cl.push(clr);
 tb+='<tr><td>'+FL[i-1]+'</td><td>'+FL[i]+'</td><td>'+fmt(d)+'</td><td style="color:#ef4444">'+dp+'%</td><td style="color:'+clr+';font-weight:600">'+co+'%</td></tr>'}
 document.querySelector('#tb_dropoff tbody').innerHTML=tb;
-Plotly.newPlot('c_dropoff',[{x:lbl,y:dr,type:'bar',marker:{color:'#ef4444'},text:dr.map(function(v){return v+'%'}),textposition:'auto',textfont:{size:10}}],L({yaxis:{gridcolor:'#334155',title:'Drop %'},margin:{t:30,b:120,l:60,r:20},xaxis:{gridcolor:'#334155',tickangle:-25}}),RC);
-Plotly.newPlot('c_conv',[{x:lbl,y:cv,type:'bar',marker:{color:cl},text:cv.map(function(v){return v+'%'}),textposition:'auto',textfont:{size:10}}],L({yaxis:{gridcolor:'#334155',title:'Conv %'},showlegend:false,margin:{t:30,b:120,l:60,r:20},xaxis:{gridcolor:'#334155',tickangle:-25}}),RC);
-var inst=vals[0]||1;Plotly.newPlot('c_step',[{x:FL,y:vals,type:'bar',marker:{color:FC},text:vals.map(function(v){return fmt(v)+' ('+Math.round(v/inst*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Unique Users'},margin:{t:30,b:100,l:60,r:20},xaxis:{gridcolor:'#334155',tickangle:-25}}),RC);
+Plotly.newPlot('c_dropoff',[{x:lbl,y:dr,type:'bar',marker:{color:'#ef4444'},text:dr.map(function(v){return v+'%'}),textposition:'auto',textfont:{size:10}}],L({yaxis:{gridcolor:'#4a2535',title:'Drop %'},margin:{t:30,b:120,l:60,r:20},xaxis:{gridcolor:'#4a2535',tickangle:-25}}),RC);
+Plotly.newPlot('c_conv',[{x:lbl,y:cv,type:'bar',marker:{color:cl},text:cv.map(function(v){return v+'%'}),textposition:'auto',textfont:{size:10}}],L({yaxis:{gridcolor:'#4a2535',title:'Conv %'},showlegend:false,margin:{t:30,b:120,l:60,r:20},xaxis:{gridcolor:'#4a2535',tickangle:-25}}),RC);
+var inst=vals[0]||1;Plotly.newPlot('c_step',[{x:FL,y:vals,type:'bar',marker:{color:FC},text:vals.map(function(v){return fmt(v)+' ('+Math.round(v/inst*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({showlegend:false,yaxis:{gridcolor:'#4a2535',title:'Unique Users'},margin:{t:30,b:100,l:60,r:20},xaxis:{gridcolor:'#4a2535',tickangle:-25}}),RC);
 };
 
 window.rt2=function(fd){
 var wk=byWeek(fd),weeks=Object.keys(wk).sort();
 var tr=FK.map(function(k,i){return{x:weeks,y:weeks.map(function(w){return wk[w][k]||0}),name:FL[i],type:'scatter',mode:'lines+markers',text:weeks.map(function(w){var v=wk[w][k]||0,inst=wk[w].installs||1;return fmt(v)+' ('+Math.round(v/inst*1000)/10+'%)'}),hovertemplate:'%{text}'}});
-Plotly.newPlot('c_weekly',tr,L({xaxis:{gridcolor:'#334155',title:'Week'},yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
+Plotly.newPlot('c_weekly',tr,L({xaxis:{gridcolor:'#4a2535',title:'Week'},yaxis:{gridcolor:'#4a2535',title:'Unique Users'}}),RC);
 var cd=weeks.map(function(w){var inst=wk[w].installs||1;return Math.round((wk[w].fee_captured||0)/inst*10000)/100});
-Plotly.newPlot('c_wconv',[{x:weeks,y:cd,type:'scatter',mode:'lines+markers+text',text:cd.map(function(v){return v+'%'}),textposition:'top',line:{color:'#22c55e',width:3},marker:{size:8}}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Conv %'}}),RC);
-Plotly.newPlot('c_wserv',[{x:weeks,y:weeks.map(function(w){return wk[w].serviceable||0}),name:'Serviceable',type:'bar',marker:{color:'#22c55e'},text:weeks.map(function(w){var v=wk[w].serviceable||0,hp=wk[w].homepage||1;return fmt(v)+' ('+Math.round(v/hp*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}},{x:weeks,y:weeks.map(function(w){return wk[w].unserviceable||0}),name:'Unserviceable',type:'bar',marker:{color:'#ef4444'},text:weeks.map(function(w){var v=wk[w].unserviceable||0,hp=wk[w].homepage||1;return fmt(v)+' ('+Math.round(v/hp*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
+Plotly.newPlot('c_wconv',[{x:weeks,y:cd,type:'scatter',mode:'lines+markers+text',text:cd.map(function(v){return v+'%'}),textposition:'top',line:{color:'#22c55e',width:3},marker:{size:8}}],L({showlegend:false,yaxis:{gridcolor:'#4a2535',title:'Conv %'}}),RC);
+Plotly.newPlot('c_wserv',[{x:weeks,y:weeks.map(function(w){return wk[w].serviceable||0}),name:'Serviceable',type:'bar',marker:{color:'#22c55e'},text:weeks.map(function(w){var v=wk[w].serviceable||0,hp=wk[w].homepage||1;return fmt(v)+' ('+Math.round(v/hp*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}},{x:weeks,y:weeks.map(function(w){return wk[w].unserviceable||0}),name:'Unserviceable',type:'bar',marker:{color:'#ef4444'},text:weeks.map(function(w){var v=wk[w].unserviceable||0,hp=wk[w].homepage||1;return fmt(v)+' ('+Math.round(v/hp*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({barmode:'group',yaxis:{gridcolor:'#4a2535',title:'Unique Users'}}),RC);
 };
 
 window.rt3=function(fd){
 var days=fd.map(function(r){return r.d});
 var tr=FK.map(function(k,i){return{x:days,y:fd.map(function(r){return r[k]}),name:FL[i],type:'scatter',mode:'lines+markers',text:fd.map(function(r){var v=r[k],inst=r.installs||1;return fmt(v)+' ('+Math.round(v/inst*1000)/10+'%)'}),hovertemplate:'%{text}'}});
-Plotly.newPlot('c_daily',tr,L({xaxis:{gridcolor:'#334155',title:'Install Date'},yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
+Plotly.newPlot('c_daily',tr,L({xaxis:{gridcolor:'#4a2535',title:'Install Date'},yaxis:{gridcolor:'#4a2535',title:'Unique Users'}}),RC);
 };
 
 window.rt4=function(fd){
@@ -515,7 +515,7 @@ document.getElementById('k5').innerHTML=
 '<div class="kpi orange"><div class="v">'+fmt(s.diff_location)+'</div><div class="l">Changed Location (Unique Users)</div></div>'+
 '<div class="kpi purple"><div class="v">'+fmt(s.get_started)+'</div><div class="l">How to Get Started (Unique Users)</div></div>';
 Plotly.newPlot('c_pie',[{values:[s.serviceable,s.unserviceable],labels:['Serviceable','Unserviceable'],type:'pie',hole:0.5,marker:{colors:['#22c55e','#ef4444']},textinfo:'label+percent+value'}],L({showlegend:false}),RC);
-var hpT=s.homepage||1;Plotly.newPlot('c_locbar',[{x:['Serviceable','Unserviceable','Changed Loc','Get Started'],y:[s.serviceable,s.unserviceable,s.diff_location,s.get_started],type:'bar',marker:{color:['#22c55e','#ef4444','#f59e0b','#a855f7']},text:[s.serviceable,s.unserviceable,s.diff_location,s.get_started].map(function(v){return fmt(v)+' ('+Math.round(v/hpT*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
+var hpT=s.homepage||1;Plotly.newPlot('c_locbar',[{x:['Serviceable','Unserviceable','Changed Loc','Get Started'],y:[s.serviceable,s.unserviceable,s.diff_location,s.get_started],type:'bar',marker:{color:['#22c55e','#ef4444','#f59e0b','#a855f7']},text:[s.serviceable,s.unserviceable,s.diff_location,s.get_started].map(function(v){return fmt(v)+' ('+Math.round(v/hpT*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({showlegend:false,yaxis:{gridcolor:'#4a2535',title:'Unique Users'}}),RC);
 var wk=byWeek(fd),weeks=Object.keys(wk).sort();
 Plotly.newPlot('c_strd',[{x:weeks,y:weeks.map(function(w){return wk[w].serviceable||0}),name:'Serviceable',type:'scatter',mode:'lines+markers',line:{color:'#22c55e'}},{x:weeks,y:weeks.map(function(w){return wk[w].unserviceable||0}),name:'Unserviceable',type:'scatter',mode:'lines+markers',line:{color:'#ef4444'}}],L(),RC);
 // Recovery journey
@@ -528,11 +528,11 @@ document.getElementById('k5r').innerHTML=
 '<div class="kpi blue"><div class="v">'+fmt(rB)+' ('+bPct+'%)</div><div class="l">Booking Fee Paid</div></div>'+
 '<div class="kpi purple"><div class="v">'+rFromC+'%</div><div class="l">Recovery Rate (of Changed)</div></div>'+
 '<div class="kpi purple"><div class="v">'+bFromR+'%</div><div class="l">Booking Rate (of Recovered)</div></div>';
-Plotly.newPlot('c_recovery',[{type:'funnel',y:['Unserviceable','Changed Location','Got Serviceable','Booking Fee Paid'],x:[rU,rC,rR,rB],textinfo:'value+percent initial',marker:{color:['#ef4444','#f59e0b','#22c55e','#3b82f6']},connector:{line:{color:'#334155'}}}],L({margin:{t:20,b:20,l:160,r:80},showlegend:false}),RC);
+Plotly.newPlot('c_recovery',[{type:'funnel',y:['Unserviceable','Changed Location','Got Serviceable','Booking Fee Paid'],x:[rU,rC,rR,rB],textinfo:'value+percent initial',marker:{color:['#ef4444','#f59e0b','#22c55e','#3b82f6']},connector:{line:{color:'#4a2535'}}}],L({margin:{t:20,b:20,l:160,r:80},showlegend:false}),RC);
 // Weekly recovery trend
 var rwk={};fRD.forEach(function(r){var d=new Date(r.d),dy=d.getDay(),df=d.getDate()-dy+(dy===0?-6:1),mon=new Date(d.setDate(df)),wk=mon.toISOString().slice(0,10);if(!rwk[wk])rwk[wk]={u:0,c:0,r:0,b:0};rwk[wk].u+=r.unserv;rwk[wk].c+=r.changed;rwk[wk].r+=r.recovered;rwk[wk].b+=r.booked});
 var rweeks=Object.keys(rwk).sort();
-Plotly.newPlot('c_recbar',[{x:rweeks,y:rweeks.map(function(w){return rwk[w].u}),name:'Unserviceable',type:'bar',marker:{color:'#ef4444'},text:rweeks.map(function(w){return fmt(rwk[w].u)}),textposition:'auto',textfont:{size:9}},{x:rweeks,y:rweeks.map(function(w){return rwk[w].c}),name:'Changed Loc',type:'bar',marker:{color:'#f59e0b'},text:rweeks.map(function(w){var v=rwk[w].c,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'auto',textfont:{size:9}},{x:rweeks,y:rweeks.map(function(w){return rwk[w].r}),name:'Recovered',type:'bar',marker:{color:'#22c55e'},text:rweeks.map(function(w){var v=rwk[w].r,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'auto',textfont:{size:9}},{x:rweeks,y:rweeks.map(function(w){return rwk[w].b}),name:'Booking Paid',type:'bar',marker:{color:'#3b82f6'},text:rweeks.map(function(w){var v=rwk[w].b,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'auto',textfont:{size:9}}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Unique Users'},xaxis:{gridcolor:'#334155',title:'Week'}}),RC);
+Plotly.newPlot('c_recbar',[{x:rweeks,y:rweeks.map(function(w){return rwk[w].u}),name:'Unserviceable',type:'bar',marker:{color:'#ef4444'},text:rweeks.map(function(w){return fmt(rwk[w].u)}),textposition:'auto',textfont:{size:9}},{x:rweeks,y:rweeks.map(function(w){return rwk[w].c}),name:'Changed Loc',type:'bar',marker:{color:'#f59e0b'},text:rweeks.map(function(w){var v=rwk[w].c,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'auto',textfont:{size:9}},{x:rweeks,y:rweeks.map(function(w){return rwk[w].r}),name:'Recovered',type:'bar',marker:{color:'#22c55e'},text:rweeks.map(function(w){var v=rwk[w].r,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'auto',textfont:{size:9}},{x:rweeks,y:rweeks.map(function(w){return rwk[w].b}),name:'Booking Paid',type:'bar',marker:{color:'#3b82f6'},text:rweeks.map(function(w){var v=rwk[w].b,u=rwk[w].u||1;return fmt(v)+' ('+Math.round(v/u*1000)/10+'%)'}),textposition:'auto',textfont:{size:9}}],L({barmode:'group',yaxis:{gridcolor:'#4a2535',title:'Unique Users'},xaxis:{gridcolor:'#4a2535',title:'Week'}}),RC);
 };
 
 window.rt6=function(){
@@ -545,7 +545,7 @@ var kh='<div class="kpi orange"><div class="v">'+fmt(total)+'</div><div class="l
 t3.forEach(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;kh+='<div class="kpi"><div class="v">'+fmt(r.u)+'</div><div class="l">'+r.p+' ('+ln+')</div></div>'});
 document.getElementById('k6').innerHTML=kh;
 var t10=aLOC.slice(0,10),px=t10.map(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;return r.p+' ('+ln+')'}),uy=t10.map(function(r){return r.u}),cs=t10.map(function(r){return r.l==='hi'?'#f59e0b':r.l==='en'?'#3b82f6':'#94a3b8'});
-Plotly.newPlot('c_loc',[{x:px,y:uy,type:'bar',marker:{color:cs},text:uy.map(function(v){return fmt(v)+' ('+Math.round(v/total*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({showlegend:false,yaxis:{gridcolor:'#334155',title:'Unique Users'},margin:{t:30,b:150,l:60,r:20},xaxis:{gridcolor:'#334155',tickangle:-35}}),RC);
+Plotly.newPlot('c_loc',[{x:px,y:uy,type:'bar',marker:{color:cs},text:uy.map(function(v){return fmt(v)+' ('+Math.round(v/total*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({showlegend:false,yaxis:{gridcolor:'#4a2535',title:'Unique Users'},margin:{t:30,b:150,l:60,r:20},xaxis:{gridcolor:'#4a2535',tickangle:-35}}),RC);
 var tb='';aLOC.forEach(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;tb+='<tr><td>'+r.p+'</td><td>'+ln+'</td><td>'+fmt(r.u)+'</td></tr>'});
 document.querySelector('#tb_loc tbody').innerHTML=tb;
 };
@@ -565,8 +565,8 @@ var pg={};fLC.forEach(function(r){if(!pg[r.p])pg[r.p]={u:0,hi:0,en:0,unk:0,c:0};
 var pArr=Object.keys(pg).map(function(p){return{p:p,u:pg[p].u,hi:pg[p].hi,en:pg[p].en,unk:pg[p].unk,c:pg[p].c}}).sort(function(a,b){return b.u-a.u});
 var top10=pArr.slice(0,10);
 var pgTotal=pArr.reduce(function(a,r){return a+r.u},0)||1;
-Plotly.newPlot('c_lcpage',[{y:top10.map(function(r){return r.p}).reverse(),x:top10.map(function(r){return r.u}).reverse(),type:'bar',orientation:'h',marker:{color:'#a855f7'},text:top10.map(function(r){return fmt(r.u)+' ('+Math.round(r.u/pgTotal*1000)/10+'%)'}).reverse(),textposition:'auto',textfont:{size:10}}],L({showlegend:false,margin:{t:20,b:40,l:200,r:80},xaxis:{gridcolor:'#334155',title:'Unique Users'}}),RC);
-Plotly.newPlot('c_lclang',[{x:top10.map(function(r){return r.p}),y:top10.map(function(r){return r.hi}),name:'To Hindi',type:'bar',marker:{color:'#f59e0b'},text:top10.map(function(r){return fmt(r.hi)+' ('+Math.round(r.hi/(r.u||1)*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}},{x:top10.map(function(r){return r.p}),y:top10.map(function(r){return r.en}),name:'To English',type:'bar',marker:{color:'#3b82f6'},text:top10.map(function(r){return fmt(r.en)+' ('+Math.round(r.en/(r.u||1)*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({barmode:'group',yaxis:{gridcolor:'#334155',title:'Unique Users'},margin:{t:30,b:150,l:60,r:20},xaxis:{gridcolor:'#334155',tickangle:-35}}),RC);
+Plotly.newPlot('c_lcpage',[{y:top10.map(function(r){return r.p}).reverse(),x:top10.map(function(r){return r.u}).reverse(),type:'bar',orientation:'h',marker:{color:'#a855f7'},text:top10.map(function(r){return fmt(r.u)+' ('+Math.round(r.u/pgTotal*1000)/10+'%)'}).reverse(),textposition:'auto',textfont:{size:10}}],L({showlegend:false,margin:{t:20,b:40,l:200,r:80},xaxis:{gridcolor:'#4a2535',title:'Unique Users'}}),RC);
+Plotly.newPlot('c_lclang',[{x:top10.map(function(r){return r.p}),y:top10.map(function(r){return r.hi}),name:'To Hindi',type:'bar',marker:{color:'#f59e0b'},text:top10.map(function(r){return fmt(r.hi)+' ('+Math.round(r.hi/(r.u||1)*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}},{x:top10.map(function(r){return r.p}),y:top10.map(function(r){return r.en}),name:'To English',type:'bar',marker:{color:'#3b82f6'},text:top10.map(function(r){return fmt(r.en)+' ('+Math.round(r.en/(r.u||1)*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({barmode:'group',yaxis:{gridcolor:'#4a2535',title:'Unique Users'},margin:{t:30,b:150,l:60,r:20},xaxis:{gridcolor:'#4a2535',tickangle:-35}}),RC);
 // Table - aggregate filtered data for table display
 var tbl={};fLC.forEach(function(r){var k=r.p+'|'+r.l;if(!tbl[k])tbl[k]={p:r.p,l:r.l,c:0,u:0};tbl[k].c+=r.c;tbl[k].u+=r.u});
 var tblArr=Object.values(tbl).sort(function(a,b){return b.u-a.u});
@@ -587,8 +587,8 @@ document.getElementById('cdf2').value=MIND;document.getElementById('cdt2').value
 function cmpFunnel(sA,sB,chartA,chartB,tblId,titleA,titleB,lA,lB){
 var vA=FK.map(function(k){return sA[k]||0}),vB=FK.map(function(k){return sB[k]||0});
 var iA=sA.installs||1,iB=sB.installs||1;
-Plotly.newPlot(chartA,[{type:'funnel',y:FL,x:vA,textinfo:'value+percent initial',marker:{color:FC},connector:{line:{color:'#334155'}}}],L({margin:{t:20,b:20,l:160,r:60},showlegend:false}),RC);
-Plotly.newPlot(chartB,[{type:'funnel',y:FL,x:vB,textinfo:'value+percent initial',marker:{color:FC.map(function(c){return c.replace('f6','96').replace('f1','91')})},connector:{line:{color:'#334155'}}}],L({margin:{t:20,b:20,l:160,r:60},showlegend:false}),RC);
+Plotly.newPlot(chartA,[{type:'funnel',y:FL,x:vA,textinfo:'value+percent initial',marker:{color:FC},connector:{line:{color:'#4a2535'}}}],L({margin:{t:20,b:20,l:160,r:60},showlegend:false}),RC);
+Plotly.newPlot(chartB,[{type:'funnel',y:FL,x:vB,textinfo:'value+percent initial',marker:{color:FC.map(function(c){return c.replace('f6','96').replace('f1','91')})},connector:{line:{color:'#4a2535'}}}],L({margin:{t:20,b:20,l:160,r:60},showlegend:false}),RC);
 document.getElementById(titleA).textContent=lA+' Funnel';
 document.getElementById(titleB).textContent=lB+' Funnel';
 var tb='';FK.forEach(function(k,i){var a=sA[k]||0,b=sB[k]||0,pA=Math.round(a/iA*1000)/10,pB=Math.round(b/iB*1000)/10;
