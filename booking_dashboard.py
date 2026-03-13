@@ -360,13 +360,15 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 </div>
 
 <div class="tc" id="t7">
-<div class="ib"><h3>What does this show?</h3><ul><li>On which <strong>screen/page</strong> users change their language most often</li><li>Whether users switch <strong>to Hindi</strong> or <strong>to English</strong></li><li>Helps understand language preference behavior across the booking flow</li></ul></div>
+<div class="ib"><h3>What does this show?</h3><ul><li>The app <strong>defaults to Hindi</strong>. This tab shows where users change their language during the booking flow.</li><li><strong>Hindi → English</strong>: Users who switched from Hindi to English (shown as "Switched to English")</li><li><strong>English → Hindi</strong>: Users who switched back to Hindi (shown as "Switched to Hindi")</li><li>Helps identify which <strong>screens trigger language switches</strong> and whether users prefer Hindi or English</li></ul></div>
 <div class="kg" id="k7"></div>
+<div class="cc"><div class="ct">Overall: Who Switches Where? (Unique Users)</div><div id="c_lcsankey" style="height:400px"></div></div>
 <div class="g2">
-<div class="cc"><div class="ct">Language Changes by Page - Top 10 (Unique Users)</div><div id="c_lcpage" style="height:400px"></div></div>
-<div class="cc"><div class="ct">Switch To Hindi vs English by Page (Unique Users)</div><div id="c_lclang" style="height:480px"></div></div>
+<div class="cc"><div class="ct">Top Pages Where Users Switch Language (Unique Users)</div><div id="c_lcpage" style="height:420px"></div></div>
+<div class="cc"><div class="ct">Hindi → English vs English → Hindi by Page (Unique Users)</div><div id="c_lclang" style="height:420px"></div></div>
 </div>
-<div class="cc"><div class="ct">Language Change Detail</div><div style="overflow-x:auto"><table id="tb_lc"><thead><tr><th>Page</th><th>Switched To</th><th>Total Events</th><th>Unique Users</th></tr></thead><tbody></tbody></table></div></div>
+<div class="cc"><div class="ct">Weekly Language Switch Trend (Unique Users)</div><div id="c_lctrend" style="height:350px"></div></div>
+<div class="cc"><div class="ct">Page-wise Breakdown</div><div style="overflow-x:auto"><table id="tb_lc"><thead><tr><th>Page</th><th>Total Users</th><th>→ English</th><th>→ English %</th><th>→ Hindi</th><th>→ Hindi %</th><th>Total Events</th></tr></thead><tbody></tbody></table></div></div>
 </div>
 
 <div class="tc" id="t8">
@@ -552,25 +554,45 @@ document.querySelector('#tb_loc tbody').innerHTML=tb;
 
 window.rt7=function(){
 var fLC=filtArr(LC);
-// Compute summary from filtered data
-var fLCS={};fLC.forEach(function(r){fLCS[r.l]=(fLCS[r.l]||0)+r.u});
-var toEn=fLCS['en']||0,toHi=fLCS['hi']||0,totalU=toEn+toHi;
+// Aggregate totals
+var toEn=0,toHi=0,totEv=0;
+fLC.forEach(function(r){if(r.l==='en')toEn+=r.u;else if(r.l==='hi')toHi+=r.u;totEv+=r.c});
+var totalU=toEn+toHi;
 var enPct=totalU>0?Math.round(toEn/totalU*1000)/10:0,hiPct=totalU>0?Math.round(toHi/totalU*1000)/10:0;
+// KPIs
 document.getElementById('k7').innerHTML=
-'<div class="kpi purple"><div class="v">'+fmt(totalU)+'</div><div class="l">Total Unique Users Changed Lang</div></div>'+
-'<div class="kpi"><div class="v">'+fmt(toEn)+' ('+enPct+'%)</div><div class="l">Switched to English</div></div>'+
-'<div class="kpi orange"><div class="v">'+fmt(toHi)+' ('+hiPct+'%)</div><div class="l">Switched to Hindi</div></div>';
+'<div class="kpi purple"><div class="v">'+fmt(totalU)+'</div><div class="l">Total Users Who Changed Language</div></div>'+
+'<div class="kpi"><div class="v">'+fmt(toEn)+'</div><div class="l">Hindi → English ('+enPct+'% of all switches)</div></div>'+
+'<div class="kpi orange"><div class="v">'+fmt(toHi)+'</div><div class="l">English → Hindi ('+hiPct+'% of all switches)</div></div>'+
+'<div class="kpi red"><div class="v">'+fmt(totEv)+'</div><div class="l">Total Switch Events (some users switch multiple times)</div></div>';
 // Aggregate by page
-var pg={};fLC.forEach(function(r){if(!pg[r.p])pg[r.p]={u:0,hi:0,en:0,unk:0,c:0};pg[r.p].u+=r.u;pg[r.p].c+=r.c;if(r.l==='hi')pg[r.p].hi+=r.u;else if(r.l==='en')pg[r.p].en+=r.u;else pg[r.p].unk+=r.u});
-var pArr=Object.keys(pg).map(function(p){return{p:p,u:pg[p].u,hi:pg[p].hi,en:pg[p].en,unk:pg[p].unk,c:pg[p].c}}).sort(function(a,b){return b.u-a.u});
-var top10=pArr.slice(0,10);
+var pg={};fLC.forEach(function(r){if(!pg[r.p])pg[r.p]={u:0,hi:0,en:0,c:0};pg[r.p].u+=r.u;pg[r.p].c+=r.c;if(r.l==='hi')pg[r.p].hi+=r.u;else if(r.l==='en')pg[r.p].en+=r.u});
+var pArr=Object.keys(pg).map(function(p){return{p:p,u:pg[p].u,hi:pg[p].hi,en:pg[p].en,c:pg[p].c}}).sort(function(a,b){return b.u-a.u});
+var top8=pArr.slice(0,8);
+// Sankey: Pages -> To English / To Hindi
+var sLbl=['Hindi → English ('+fmt(toEn)+')','English → Hindi ('+fmt(toHi)+')'];
+var sPages=top8.map(function(r){return r.p});
+var allLbl=sPages.concat(sLbl);
+var sSource=[],sTarget=[],sValue=[],sColor=[];
+top8.forEach(function(r,i){
+if(r.en>0){sSource.push(i);sTarget.push(sPages.length);sValue.push(r.en);sColor.push('rgba(59,130,246,0.4)');}
+if(r.hi>0){sSource.push(i);sTarget.push(sPages.length+1);sValue.push(r.hi);sColor.push('rgba(249,115,22,0.4)');}
+});
+var nodeColors=sPages.map(function(){return '#E91E63'}).concat(['#3b82f6','#f59e0b']);
+Plotly.newPlot('c_lcsankey',[{type:'sankey',orientation:'h',node:{pad:20,thickness:25,line:{color:'#4a2535',width:1},label:allLbl,color:nodeColors},link:{source:sSource,target:sTarget,value:sValue,color:sColor}}],L({margin:{t:20,b:20,l:10,r:10}}),RC);
+// Top pages horizontal stacked bar (100% stacked to show split)
 var pgTotal=pArr.reduce(function(a,r){return a+r.u},0)||1;
-Plotly.newPlot('c_lcpage',[{y:top10.map(function(r){return r.p}).reverse(),x:top10.map(function(r){return r.u}).reverse(),type:'bar',orientation:'h',marker:{color:'#a855f7'},text:top10.map(function(r){return fmt(r.u)+' ('+Math.round(r.u/pgTotal*1000)/10+'%)'}).reverse(),textposition:'auto',textfont:{size:10}}],L({showlegend:false,margin:{t:20,b:40,l:200,r:80},xaxis:{gridcolor:'#4a2535',title:'Unique Users'}}),RC);
-Plotly.newPlot('c_lclang',[{x:top10.map(function(r){return r.p}),y:top10.map(function(r){return r.hi}),name:'To Hindi',type:'bar',marker:{color:'#f59e0b'},text:top10.map(function(r){return fmt(r.hi)+' ('+Math.round(r.hi/(r.u||1)*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}},{x:top10.map(function(r){return r.p}),y:top10.map(function(r){return r.en}),name:'To English',type:'bar',marker:{color:'#3b82f6'},text:top10.map(function(r){return fmt(r.en)+' ('+Math.round(r.en/(r.u||1)*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({barmode:'group',yaxis:{gridcolor:'#4a2535',title:'Unique Users'},margin:{t:30,b:150,l:60,r:20},xaxis:{gridcolor:'#4a2535',tickangle:-35}}),RC);
-// Table - aggregate filtered data for table display
-var tbl={};fLC.forEach(function(r){var k=r.p+'|'+r.l;if(!tbl[k])tbl[k]={p:r.p,l:r.l,c:0,u:0};tbl[k].c+=r.c;tbl[k].u+=r.u});
-var tblArr=Object.values(tbl).sort(function(a,b){return b.u-a.u});
-var tb='';tblArr.forEach(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;tb+='<tr><td>'+r.p+'</td><td>'+ln+'</td><td>'+fmt(r.c)+'</td><td>'+fmt(r.u)+'</td></tr>'});
+Plotly.newPlot('c_lcpage',[{y:top8.map(function(r){return r.p}).reverse(),x:top8.map(function(r){return r.en}).reverse(),name:'→ English',type:'bar',orientation:'h',marker:{color:'#3b82f6'},text:top8.map(function(r){return fmt(r.en)+' ('+Math.round(r.en/(r.u||1)*1000)/10+'%)'}).reverse(),textposition:'auto',textfont:{size:10}},{y:top8.map(function(r){return r.p}).reverse(),x:top8.map(function(r){return r.hi}).reverse(),name:'→ Hindi',type:'bar',orientation:'h',marker:{color:'#f59e0b'},text:top8.map(function(r){return fmt(r.hi)+' ('+Math.round(r.hi/(r.u||1)*1000)/10+'%)'}).reverse(),textposition:'auto',textfont:{size:10}}],L({barmode:'stack',showlegend:true,margin:{t:20,b:40,l:200,r:80},xaxis:{gridcolor:'#4a2535',title:'Unique Users'}}),RC);
+// Per-page % split chart (what % went to English vs Hindi on each page)
+Plotly.newPlot('c_lclang',[{y:top8.map(function(r){return r.p}).reverse(),x:top8.map(function(r){return r.u>0?Math.round(r.en/r.u*1000)/10:0}).reverse(),name:'% → English',type:'bar',orientation:'h',marker:{color:'#3b82f6'},text:top8.map(function(r){var p=r.u>0?Math.round(r.en/r.u*1000)/10:0;return p+'%'}).reverse(),textposition:'auto',textfont:{size:11}},{y:top8.map(function(r){return r.p}).reverse(),x:top8.map(function(r){return r.u>0?Math.round(r.hi/r.u*1000)/10:0}).reverse(),name:'% → Hindi',type:'bar',orientation:'h',marker:{color:'#f59e0b'},text:top8.map(function(r){var p=r.u>0?Math.round(r.hi/r.u*1000)/10:0;return p+'%'}).reverse(),textposition:'auto',textfont:{size:11}}],L({barmode:'stack',showlegend:true,margin:{t:20,b:40,l:200,r:80},xaxis:{gridcolor:'#4a2535',title:'% of Users on Page',range:[0,100]}}),RC);
+// Weekly trend
+var wk={};fLC.forEach(function(r){var d=new Date(r.d),dy=d.getDay(),df=d.getDate()-dy+(dy===0?-6:1),mon=new Date(d.setDate(df)),w=mon.toISOString().slice(0,10);if(!wk[w])wk[w]={en:0,hi:0};if(r.l==='en')wk[w].en+=r.u;else if(r.l==='hi')wk[w].hi+=r.u});
+var weeks=Object.keys(wk).sort();
+Plotly.newPlot('c_lctrend',[{x:weeks,y:weeks.map(function(w){return wk[w].en}),name:'Hindi → English',type:'scatter',mode:'lines+markers',line:{color:'#3b82f6',width:3},marker:{size:7},text:weeks.map(function(w){var t=wk[w].en+wk[w].hi;return fmt(wk[w].en)+' ('+Math.round(wk[w].en/(t||1)*1000)/10+'%)'})},{x:weeks,y:weeks.map(function(w){return wk[w].hi}),name:'English → Hindi',type:'scatter',mode:'lines+markers',line:{color:'#f59e0b',width:3},marker:{size:7},text:weeks.map(function(w){var t=wk[w].en+wk[w].hi;return fmt(wk[w].hi)+' ('+Math.round(wk[w].hi/(t||1)*1000)/10+'%)'})},{x:weeks,y:weeks.map(function(w){return wk[w].en+wk[w].hi}),name:'Total Switches',type:'scatter',mode:'lines+markers',line:{color:'#E91E63',width:2,dash:'dot'},marker:{size:5}}],L({yaxis:{gridcolor:'#4a2535',title:'Unique Users'},xaxis:{gridcolor:'#4a2535',title:'Week'}}),RC);
+// Table - page-wise with clear columns
+var tb='';pArr.forEach(function(r){
+var enP=r.u>0?Math.round(r.en/r.u*1000)/10:0,hiP=r.u>0?Math.round(r.hi/r.u*1000)/10:0;
+tb+='<tr><td style="font-weight:600">'+r.p+'</td><td>'+fmt(r.u)+'</td><td>'+fmt(r.en)+'</td><td style="color:#3b82f6;font-weight:600">'+enP+'%</td><td>'+fmt(r.hi)+'</td><td style="color:#f59e0b;font-weight:600">'+hiP+'%</td><td>'+fmt(r.c)+'</td></tr>'});
 document.querySelector('#tb_lc tbody').innerHTML=tb;
 };
 
