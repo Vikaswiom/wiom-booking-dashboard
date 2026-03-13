@@ -82,21 +82,6 @@ for r in cohort_rows:
     })
 
 # =====================================================================
-# QUERY 3: Location change page + language (direct query)
-# =====================================================================
-print("Fetching location change breakdown...")
-q3 = """SELECT
-  COALESCE(NULLIF(TRY_PARSE_JSON(PROPERTIES):"event_props.page_name"::STRING,''), 'unknown') as page,
-  COALESCE(NULLIF(TRY_PARSE_JSON(PROPERTIES):"event_props.language"::STRING,''), 'hi') as language,
-  CAST(TIMESTAMP AS DATE) as event_date,
-  COUNT(DISTINCT USER_ID) as unique_users
-FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER
-WHERE EVENT_NAME = 'choose_different_location_clicked' AND TIMESTAMP >= '2026-01-26'
-GROUP BY page, language, event_date ORDER BY event_date"""
-_, loc_rows = run_query(q3)
-loc_data = [{'p': r[0], 'l': r[1] if r[1] in ('hi','en') else 'hi', 'd': r[2][:10], 'u': r[3]} for r in loc_rows]
-
-# =====================================================================
 # QUERY 4: Language change behavior - on which screen users change
 # =====================================================================
 print("Fetching language change behavior...")
@@ -293,9 +278,8 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 <div class="tab" onclick="st(3)">Daily Trends</div>
 <div class="tab" onclick="st(4)">Month-wise</div>
 <div class="tab" onclick="st(5)">Serviceability</div>
-<div class="tab" onclick="st(6)">Location Changes</div>
-<div class="tab" onclick="st(7)">Language Change Behavior</div>
-<div class="tab" onclick="st(8)">Funnel Comparison</div>
+<div class="tab" onclick="st(6)">Language Change Behavior</div>
+<div class="tab" onclick="st(7)">Funnel Comparison</div>
 </div>
 
 <div class="tc active" id="t0">
@@ -353,15 +337,8 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 </div>
 
 <div class="tc" id="t6">
-<div class="ib"><h3>What does this show?</h3><ul><li>On which <strong>page</strong> users click "Choose Different Location"</li><li>What <strong>language</strong> they use when changing location</li></ul></div>
-<div class="kg" id="k6"></div>
-<div class="cc"><div class="ct">Location Change by Page + Language (Unique Users)</div><div id="c_loc" style="height:400px"></div></div>
-<div class="cc"><div class="ct">Detail Table</div><div style="overflow-x:auto"><table id="tb_loc"><thead><tr><th>Page</th><th>Language</th><th>Unique Users</th></tr></thead><tbody></tbody></table></div></div>
-</div>
-
-<div class="tc" id="t7">
 <div class="ib"><h3>What does this show?</h3><ul><li>The app <strong>defaults to Hindi</strong>. This tab shows where users change their language during the booking flow.</li><li><strong>Hindi → English</strong>: Users who switched from Hindi to English (shown as "Switched to English")</li><li><strong>English → Hindi</strong>: Users who switched back to Hindi (shown as "Switched to Hindi")</li><li>Helps identify which <strong>screens trigger language switches</strong> and whether users prefer Hindi or English</li></ul></div>
-<div class="kg" id="k7"></div>
+<div class="kg" id="k6"></div>
 <div class="cc"><div class="ct">Overall: Who Switches Where? (Unique Users)</div><div id="c_lcsankey" style="height:400px"></div></div>
 <div class="g2">
 <div class="cc"><div class="ct">Top Pages Where Users Switch Language (Unique Users)</div><div id="c_lcpage" style="height:420px"></div></div>
@@ -371,7 +348,7 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 <div class="cc"><div class="ct">Page-wise Breakdown</div><div style="overflow-x:auto"><table id="tb_lc"><thead><tr><th>Page</th><th>Total Users</th><th>→ English</th><th>→ English %</th><th>→ Hindi</th><th>→ Hindi %</th><th>Total Events</th></tr></thead><tbody></tbody></table></div></div>
 </div>
 
-<div class="tc" id="t8">
+<div class="tc" id="t7">
 <div class="ib"><h3>What does this show?</h3><ul><li>Compare <strong>two different date ranges</strong> side-by-side to see funnel changes over time</li><li>Compare <strong>two app versions</strong> to see which version performs better</li><li>Green = improvement, Red = decline</li></ul></div>
 
 <div class="cc">
@@ -403,7 +380,6 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 
 <script>
 var CD = """ + json.dumps(cohort_data) + """;
-var LOC = """ + json.dumps(loc_data) + """;
 var LC = """ + json.dumps(langchange_data) + """;
 var RD = """ + json.dumps(recovery_data) + """;
 var AV = """ + json.dumps(app_versions) + """;
@@ -538,21 +514,6 @@ Plotly.newPlot('c_recbar',[{x:rweeks,y:rweeks.map(function(w){return rwk[w].u}),
 };
 
 window.rt6=function(){
-var fLOC=filtArr(LOC);
-// Aggregate filtered data by page+lang
-var lm={};fLOC.forEach(function(r){var k=r.p+'|'+r.l;lm[k]=(lm[k]||0)+r.u});
-var aLOC=Object.keys(lm).map(function(k){var p=k.split('|');return{p:p[0],l:p[1],u:lm[k]}}).sort(function(a,b){return b.u-a.u});
-var t3=aLOC.slice(0,3),total=0;aLOC.forEach(function(r){total+=r.u});
-var kh='<div class="kpi orange"><div class="v">'+fmt(total)+'</div><div class="l">Total Location Changes</div></div>';
-t3.forEach(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;kh+='<div class="kpi"><div class="v">'+fmt(r.u)+'</div><div class="l">'+r.p+' ('+ln+')</div></div>'});
-document.getElementById('k6').innerHTML=kh;
-var t10=aLOC.slice(0,10),px=t10.map(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;return r.p+' ('+ln+')'}),uy=t10.map(function(r){return r.u}),cs=t10.map(function(r){return r.l==='hi'?'#f59e0b':r.l==='en'?'#3b82f6':'#94a3b8'});
-Plotly.newPlot('c_loc',[{x:px,y:uy,type:'bar',marker:{color:cs},text:uy.map(function(v){return fmt(v)+' ('+Math.round(v/total*1000)/10+'%)'}),textposition:'auto',textfont:{size:10}}],L({showlegend:false,yaxis:{gridcolor:'#4a2535',title:'Unique Users'},margin:{t:30,b:150,l:60,r:20},xaxis:{gridcolor:'#4a2535',tickangle:-35}}),RC);
-var tb='';aLOC.forEach(function(r){var ln=r.l==='hi'?'Hindi':r.l==='en'?'English':r.l;tb+='<tr><td>'+r.p+'</td><td>'+ln+'</td><td>'+fmt(r.u)+'</td></tr>'});
-document.querySelector('#tb_loc tbody').innerHTML=tb;
-};
-
-window.rt7=function(){
 var fLC=filtArr(LC);
 // Aggregate totals
 var toEn=0,toHi=0,totEv=0;
@@ -560,7 +521,7 @@ fLC.forEach(function(r){if(r.l==='en')toEn+=r.u;else if(r.l==='hi')toHi+=r.u;tot
 var totalU=toEn+toHi;
 var enPct=totalU>0?Math.round(toEn/totalU*1000)/10:0,hiPct=totalU>0?Math.round(toHi/totalU*1000)/10:0;
 // KPIs
-document.getElementById('k7').innerHTML=
+document.getElementById('k6').innerHTML=
 '<div class="kpi purple"><div class="v">'+fmt(totalU)+'</div><div class="l">Total Users Who Changed Language</div></div>'+
 '<div class="kpi"><div class="v">'+fmt(toEn)+'</div><div class="l">Hindi → English ('+enPct+'% of all switches)</div></div>'+
 '<div class="kpi orange"><div class="v">'+fmt(toHi)+'</div><div class="l">English → Hindi ('+hiPct+'% of all switches)</div></div>'+
@@ -597,7 +558,7 @@ document.querySelector('#tb_lc tbody').innerHTML=tb;
 };
 
 // Init comparison tab
-window.rt8=function(){
+window.rt7=function(){
 var cv1=document.getElementById('cv1'),cv2=document.getElementById('cv2');
 if(cv1.options.length<=1){cv1.innerHTML='';cv2.innerHTML='';
 AV.forEach(function(v){cv1.innerHTML+='<option value="'+v+'">'+v+'</option>';cv2.innerHTML+='<option value="'+v+'">'+v+'</option>'});
