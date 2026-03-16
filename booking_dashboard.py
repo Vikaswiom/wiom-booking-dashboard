@@ -369,7 +369,6 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)} tr:hover{background:r
 <div class="cc"><div class="ct">Language at Each Funnel Step (Unique Users)</div><div id="c_langbar" style="height:450px"></div></div>
 <div class="cc"><div class="ct">Hindi % vs English % Across Funnel</div><div id="c_langpct" style="height:450px"></div></div>
 </div>
-<div class="cc"><div class="ct">Where Do Users Switch? (Hindi % Change Between Steps)</div><div id="c_langshift" style="height:380px"></div></div>
 <div class="cc"><div class="ct">Language Breakdown by Funnel Step</div><div style="overflow-x:auto"><table id="tb_lc"><thead><tr><th>Funnel Step</th><th>Total Users</th><th>Hindi Users</th><th>Hindi %</th><th>English Users</th><th>English %</th><th>Hindi % Change</th></tr></thead><tbody></tbody></table></div></div>
 </div>
 
@@ -563,14 +562,6 @@ document.getElementById('k6').innerHTML=
 Plotly.newPlot('c_langbar',[{x:evtLabels,y:hiArr,name:'Hindi',type:'bar',marker:{color:'#f59e0b'},text:hiArr.map(function(v,i){return fmt(v)+' ('+hiPcts[i]+'%)'}),textposition:'auto',textfont:{size:9}},{x:evtLabels,y:enArr,name:'English',type:'bar',marker:{color:'#3b82f6'},text:enArr.map(function(v,i){return fmt(v)+' ('+enPcts[i]+'%)'}),textposition:'auto',textfont:{size:9}}],L({barmode:'stack',yaxis:{gridcolor:'#4a2535',title:'Unique Users'},margin:{t:30,b:130,l:60,r:20},xaxis:{gridcolor:'#4a2535',tickangle:-35}}),RC);
 // Line chart: Hindi % vs English % across funnel
 Plotly.newPlot('c_langpct',[{x:evtLabels,y:hiPcts,name:'Hindi %',type:'scatter',mode:'lines+markers+text',line:{color:'#f59e0b',width:3},marker:{size:8},text:hiPcts.map(function(v){return v+'%'}),textposition:'top center',textfont:{size:10}},{x:evtLabels,y:enPcts,name:'English %',type:'scatter',mode:'lines+markers+text',line:{color:'#3b82f6',width:3},marker:{size:8},text:enPcts.map(function(v){return v+'%'}),textposition:'top center',textfont:{size:10}}],L({yaxis:{gridcolor:'#4a2535',title:'% of Users at Step',range:[0,105]},margin:{t:30,b:130,l:60,r:20},xaxis:{gridcolor:'#4a2535',tickangle:-35}}),RC);
-// Shift chart: change in Hindi % from previous step
-var shiftLabels=[],shiftVals=[],shiftColors=[];
-for(var i=1;i<evtOrder.length;i++){
-var diff=Math.round((hiPcts[i]-hiPcts[i-1])*10)/10;
-shiftLabels.push(evtLabels[i-1]+' → '+evtLabels[i]);
-shiftVals.push(diff);
-shiftColors.push(diff<0?'#3b82f6':'#f59e0b')}
-Plotly.newPlot('c_langshift',[{x:shiftLabels,y:shiftVals,type:'bar',marker:{color:shiftColors},text:shiftVals.map(function(v){return (v>0?'+':'')+v+'%'}),textposition:'outside',textfont:{size:10}}],L({yaxis:{gridcolor:'#4a2535',title:'Hindi % Change',zeroline:true,zerolinecolor:'#E91E63',zerolinewidth:2},margin:{t:30,b:140,l:60,r:20},xaxis:{gridcolor:'#4a2535',tickangle:-30},annotations:[{x:0.5,y:1.02,xref:'paper',yref:'paper',text:'<b>Blue bars = users moved to English | Orange bars = users moved to Hindi</b>',showarrow:false,font:{size:11,color:'#b89aaa'}}],showlegend:false}),RC);
 // Table
 var tb='',prevHiPct=null;
 evtOrder.forEach(function(e,i){var d=le[e]||{hi:0,en:0},hi=d.hi||0,en=d.en||0,tot=hi+en;
