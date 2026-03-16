@@ -540,8 +540,8 @@ Plotly.newPlot('c_recbar',[{x:rweeks,y:rweeks.map(function(w){return rwk[w].u}),
 window.rt6=function(){
 var fLS=filtArr(LS);
 // Event order for funnel
-var evtOrder=['App Installed','booking_homepage_loaded','serviceable_page_loaded','unserviceable_page_loaded','how_does_it_work_clicked','how_to_get_started_clicked','cost_today_clicked','pay_100_to_move_forward_clicked','booking_fee_captured','choose_different_location_clicked'];
-var evtLabels=['App Installed','Homepage Loaded','Serviceable Page','Unserviceable Page','How Does It Work','Get Started','Cost Today','Pay 100 Clicked','Booking Fee Paid','Changed Location'];
+var evtOrder=['App Installed','booking_homepage_loaded','serviceable_page_loaded','unserviceable_page_loaded','how_does_it_work_clicked','how_to_get_started_clicked','cost_today_clicked','pay_100_to_move_forward_clicked','booking_fee_captured'];
+var evtLabels=['App Installed','Homepage Loaded','Serviceable Page','Unserviceable Page','How Does It Work','Get Started','Cost Today','Pay 100 Clicked','Booking Fee Paid'];
 // Aggregate by event+lang
 var le={};fLS.forEach(function(r){if(!le[r.e])le[r.e]={hi:0,en:0};le[r.e][r.l]=(le[r.e][r.l]||0)+r.u});
 // Build arrays
