@@ -3,9 +3,10 @@ WIOM Booking Flow Funnel Dashboard
 Install-cohort based: groups by install date so funnel is always correct
 (installs >= homepage >= serviceable >= ... at every level).
 Only first-time installers with 2026_ app version.
+Queries run in monthly chunks to avoid Snowflake/Metabase timeouts.
 """
 import json, os, ssl, urllib.request
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output_booking')
 os.makedirs(OUT, exist_ok=True)
@@ -26,6 +27,7 @@ if not api_key:
 
 METABASE_URL = "https://metabase.wiom.in/api/dataset"
 DB_ID = 113
+START_DATE = '2026-01-26'
 
 def run_query(sql):
     payload = json.dumps({'database': DB_ID, 'type': 'native', 'native': {'query': sql}}).encode()
@@ -36,25 +38,49 @@ def run_query(sql):
         headers={'Content-Type': 'application/json', 'X-Api-Key': api_key}, method='POST')
     resp = urllib.request.urlopen(req, context=ctx, timeout=600)
     data = json.loads(resp.read())
+    status = data.get('status')
+    if status == 'failed':
+        print(f"  WARNING: Query failed: {data.get('error', 'unknown error')}")
+        return [], []
+    if 'data' not in data:
+        print(f"  WARNING: No data in response (status={status})")
+        return [], []
     return [c['name'] for c in data['data']['cols']], data['data']['rows']
 
-INSTALL_BASE_CTE = """install_base AS (
-  SELECT DISTINCT USER_ID, CAST(TIMESTAMP AS DATE) as install_date
-  FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER
-  WHERE EVENT_NAME = 'App Installed' AND TIMESTAMP >= '2026-01-26'
-  AND TRY_PARSE_JSON(PROPERTIES):"event_props.ct_app_version"::STRING LIKE '2026_%'
-  AND TRY_PARSE_JSON(PROPERTIES):"profile.events.App Installed.count"::INT = 1
-)"""
+def get_month_ranges(start_str):
+    """Generate monthly date ranges from start_str to today."""
+    start = date.fromisoformat(start_str)
+    today = date.today()
+    ranges = []
+    cur = date(start.year, start.month, 1) if start.day == 1 else start
+    while cur <= today:
+        if cur.month == 12:
+            next_month = date(cur.year + 1, 1, 1)
+        else:
+            next_month = date(cur.year, cur.month + 1, 1)
+        end = min(next_month, today + timedelta(days=1))
+        ranges.append((cur.isoformat(), end.isoformat()))
+        cur = next_month
+    return ranges
 
 DOWNSTREAM_EVENTS = """('booking_homepage_loaded','serviceable_page_loaded','unserviceable_page_loaded',
 'how_does_it_work_clicked','how_to_get_started_clicked','cost_today_clicked',
 'pay_100_to_move_forward_clicked','booking_fee_captured','choose_different_location_clicked')"""
 
 # =====================================================================
-# QUERY 1: Daily install cohort funnel
+# QUERY 1: Daily install cohort funnel (monthly chunks to avoid timeout)
 # =====================================================================
-print("Fetching daily install cohort funnel...")
-q1 = f"""WITH {INSTALL_BASE_CTE}
+print("Fetching daily install cohort funnel (monthly chunks)...")
+cohort_data = []
+for m_start, m_end in get_month_ranges(START_DATE):
+    print(f"  Chunk: {m_start} to {m_end}...")
+    q1 = f"""WITH install_base AS (
+  SELECT DISTINCT USER_ID, CAST(TIMESTAMP AS DATE) as install_date
+  FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER
+  WHERE EVENT_NAME = 'App Installed' AND TIMESTAMP >= '{m_start}' AND TIMESTAMP < '{m_end}'
+  AND TRY_PARSE_JSON(PROPERTIES):"event_props.ct_app_version"::STRING LIKE '2026_%'
+  AND TRY_PARSE_JSON(PROPERTIES):"profile.events.App Installed.count"::INT = 1
+)
 SELECT ib.install_date,
   COUNT(DISTINCT ib.USER_ID) as installs,
   COUNT(DISTINCT CASE WHEN c.EVENT_NAME='booking_homepage_loaded' THEN c.USER_ID END) as homepage,
@@ -68,18 +94,17 @@ SELECT ib.install_date,
   COUNT(DISTINCT CASE WHEN c.EVENT_NAME='choose_different_location_clicked' THEN c.USER_ID END) as diff_location
 FROM install_base ib
 LEFT JOIN PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER c ON c.USER_ID = ib.USER_ID
-  AND c.EVENT_NAME IN {DOWNSTREAM_EVENTS} AND c.TIMESTAMP >= '2026-01-26'
+  AND c.EVENT_NAME IN {DOWNSTREAM_EVENTS} AND c.TIMESTAMP >= '{m_start}'
 GROUP BY ib.install_date ORDER BY ib.install_date"""
-_, cohort_rows = run_query(q1)
-
-# Format: [{d, installs, homepage, serviceable, ...}, ...]
-cohort_data = []
-for r in cohort_rows:
-    cohort_data.append({
-        'd': r[0][:10], 'installs': r[1], 'homepage': r[2], 'serviceable': r[3],
-        'unserviceable': r[4], 'how_works': r[5], 'get_started': r[6],
-        'cost_today': r[7], 'pay_100': r[8], 'fee_captured': r[9], 'diff_location': r[10]
-    })
+    _, rows = run_query(q1)
+    for r in rows:
+        cohort_data.append({
+            'd': r[0][:10], 'installs': r[1], 'homepage': r[2], 'serviceable': r[3],
+            'unserviceable': r[4], 'how_works': r[5], 'get_started': r[6],
+            'cost_today': r[7], 'pay_100': r[8], 'fee_captured': r[9], 'diff_location': r[10]
+        })
+cohort_data.sort(key=lambda x: x['d'])
+print(f"  Total cohort rows: {len(cohort_data)}")
 
 # =====================================================================
 # QUERY 4: Language at each funnel step (from original 10 events)
@@ -126,27 +151,37 @@ for r in fee_lang_rows:
     lang_step_data.append({'e': 'booking_fee_captured', 'l': lang, 'd': r[1][:10], 'u': r[2]})
 
 # =====================================================================
-# QUERY 5: Distinct app versions
+# QUERY 5: Distinct app versions (monthly chunks)
 # =====================================================================
-print("Fetching app versions...")
-q5 = """SELECT DISTINCT TRY_PARSE_JSON(PROPERTIES):"event_props.ct_app_version"::STRING as app_version
+print("Fetching app versions (monthly chunks)...")
+app_versions_set = set()
+for m_start, m_end in get_month_ranges(START_DATE):
+    q5 = f"""SELECT DISTINCT TRY_PARSE_JSON(PROPERTIES):"event_props.ct_app_version"::STRING as app_version
 FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER
-WHERE EVENT_NAME = 'App Installed' AND TIMESTAMP >= '2026-01-26'
+WHERE EVENT_NAME = 'App Installed' AND TIMESTAMP >= '{m_start}' AND TIMESTAMP < '{m_end}'
 AND TRY_PARSE_JSON(PROPERTIES):"event_props.ct_app_version"::STRING LIKE '2026_%'
 AND TRY_PARSE_JSON(PROPERTIES):"profile.events.App Installed.count"::INT = 1
 ORDER BY app_version"""
-_, av_rows = run_query(q5)
-app_versions = sorted([r[0] for r in av_rows if r[0]])
+    _, av_rows = run_query(q5)
+    for r in av_rows:
+        if r[0]:
+            app_versions_set.add(r[0])
+app_versions = sorted(app_versions_set)
+print(f"  Found {len(app_versions)} app versions")
 
 # =====================================================================
-# QUERY 6: Funnel by app version (aggregated totals per version)
+# QUERY 6: Funnel by app version (monthly chunks, aggregated in Python)
 # =====================================================================
-print("Fetching version-wise funnel...")
-q6 = f"""WITH install_base_v AS (
+print("Fetching version-wise funnel (monthly chunks)...")
+version_agg = {}  # {version: {installs: set(), homepage: set(), ...}}
+try:
+    for m_start, m_end in get_month_ranges(START_DATE):
+        print(f"  Chunk: {m_start} to {m_end}...")
+        q6 = f"""WITH install_base_v AS (
   SELECT DISTINCT USER_ID,
     TRY_PARSE_JSON(PROPERTIES):"event_props.ct_app_version"::STRING as app_version
   FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER
-  WHERE EVENT_NAME = 'App Installed' AND TIMESTAMP >= '2026-01-26'
+  WHERE EVENT_NAME = 'App Installed' AND TIMESTAMP >= '{m_start}' AND TIMESTAMP < '{m_end}'
   AND TRY_PARSE_JSON(PROPERTIES):"event_props.ct_app_version"::STRING LIKE '2026_%'
   AND TRY_PARSE_JSON(PROPERTIES):"profile.events.App Installed.count"::INT = 1
 )
@@ -163,26 +198,44 @@ SELECT ib.app_version,
   COUNT(DISTINCT CASE WHEN c.EVENT_NAME='choose_different_location_clicked' THEN c.USER_ID END) as diff_location
 FROM install_base_v ib
 LEFT JOIN PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER c ON c.USER_ID = ib.USER_ID
-  AND c.EVENT_NAME IN {DOWNSTREAM_EVENTS} AND c.TIMESTAMP >= '2026-01-26'
+  AND c.EVENT_NAME IN {DOWNSTREAM_EVENTS} AND c.TIMESTAMP >= '{m_start}'
 GROUP BY ib.app_version ORDER BY ib.app_version"""
-try:
-    _, ver_rows = run_query(q6)
-    version_data = []
-    for r in ver_rows:
-        version_data.append({
-            'v': r[0], 'installs': r[1], 'homepage': r[2], 'serviceable': r[3],
-            'unserviceable': r[4], 'how_works': r[5], 'get_started': r[6],
-            'cost_today': r[7], 'pay_100': r[8], 'fee_captured': r[9], 'diff_location': r[10]
-        })
+        _, ver_rows = run_query(q6)
+        for r in ver_rows:
+            v = r[0]
+            if v not in version_agg:
+                version_agg[v] = {'installs': 0, 'homepage': 0, 'serviceable': 0, 'unserviceable': 0,
+                    'how_works': 0, 'get_started': 0, 'cost_today': 0, 'pay_100': 0, 'fee_captured': 0, 'diff_location': 0}
+            version_agg[v]['installs'] += r[1]
+            version_agg[v]['homepage'] += r[2]
+            version_agg[v]['serviceable'] += r[3]
+            version_agg[v]['unserviceable'] += r[4]
+            version_agg[v]['how_works'] += r[5]
+            version_agg[v]['get_started'] += r[6]
+            version_agg[v]['cost_today'] += r[7]
+            version_agg[v]['pay_100'] += r[8]
+            version_agg[v]['fee_captured'] += r[9]
+            version_agg[v]['diff_location'] += r[10]
+    version_data = [{'v': v, **d} for v, d in sorted(version_agg.items())]
 except Exception as e:
     print(f"Warning: Version funnel query failed: {e}")
     version_data = []
 
 # =====================================================================
-# QUERY 7: Recovery journey (Unserviceable → Changed Location → Serviceable → Booking Fee Paid)
+# QUERY 7: Recovery journey (monthly chunks)
 # =====================================================================
-print("Fetching recovery journey data...")
-q7 = f"""WITH {INSTALL_BASE_CTE},
+print("Fetching recovery journey data (monthly chunks)...")
+recovery_data = []
+try:
+    for m_start, m_end in get_month_ranges(START_DATE):
+        print(f"  Chunk: {m_start} to {m_end}...")
+        q7 = f"""WITH install_base AS (
+  SELECT DISTINCT USER_ID, CAST(TIMESTAMP AS DATE) as install_date
+  FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER
+  WHERE EVENT_NAME = 'App Installed' AND TIMESTAMP >= '{m_start}' AND TIMESTAMP < '{m_end}'
+  AND TRY_PARSE_JSON(PROPERTIES):"event_props.ct_app_version"::STRING LIKE '2026_%'
+  AND TRY_PARSE_JSON(PROPERTIES):"profile.events.App Installed.count"::INT = 1
+),
 user_journey AS (
   SELECT ib.USER_ID, ib.install_date,
     MIN(CASE WHEN c.EVENT_NAME='unserviceable_page_loaded' THEN c.TIMESTAMP END) as t_unserv,
@@ -192,7 +245,7 @@ user_journey AS (
   FROM install_base ib
   INNER JOIN PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER c ON c.USER_ID = ib.USER_ID
     AND c.EVENT_NAME IN ('unserviceable_page_loaded','choose_different_location_clicked','serviceable_page_loaded','booking_fee_captured')
-    AND c.TIMESTAMP >= '2026-01-26'
+    AND c.TIMESTAMP >= '{m_start}'
   GROUP BY ib.USER_ID, ib.install_date
   HAVING t_unserv IS NOT NULL
 )
@@ -203,9 +256,10 @@ SELECT install_date,
   SUM(CASE WHEN t_change IS NOT NULL AND t_serv IS NOT NULL AND t_booked IS NOT NULL AND t_change > t_unserv AND t_serv > t_change AND t_booked > t_serv THEN 1 ELSE 0 END) as booked
 FROM user_journey
 GROUP BY install_date ORDER BY install_date"""
-try:
-    _, recovery_rows = run_query(q7)
-    recovery_data = [{'d': r[0][:10], 'unserv': r[1], 'changed': r[2], 'recovered': r[3], 'booked': r[4]} for r in recovery_rows]
+        _, recovery_rows = run_query(q7)
+        for r in recovery_rows:
+            recovery_data.append({'d': r[0][:10], 'unserv': r[1], 'changed': r[2], 'recovered': r[3], 'booked': r[4]})
+    recovery_data.sort(key=lambda x: x['d'])
 except Exception as e:
     print(f"Warning: Recovery journey query failed: {e}")
     recovery_data = []
