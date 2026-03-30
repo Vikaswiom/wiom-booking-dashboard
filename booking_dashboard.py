@@ -29,23 +29,32 @@ METABASE_URL = "https://metabase.wiom.in/api/dataset"
 DB_ID = 113
 START_DATE = '2026-01-26'
 
-def run_query(sql):
-    payload = json.dumps({'database': DB_ID, 'type': 'native', 'native': {'query': sql}}).encode()
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-    req = urllib.request.Request(METABASE_URL, data=payload,
-        headers={'Content-Type': 'application/json', 'X-Api-Key': api_key}, method='POST')
-    resp = urllib.request.urlopen(req, context=ctx, timeout=600)
-    data = json.loads(resp.read())
-    status = data.get('status')
-    if status == 'failed':
-        print(f"  WARNING: Query failed: {data.get('error', 'unknown error')}")
-        return [], []
-    if 'data' not in data:
-        print(f"  WARNING: No data in response (status={status})")
-        return [], []
-    return [c['name'] for c in data['data']['cols']], data['data']['rows']
+def run_query(sql, retries=2):
+    import time
+    for attempt in range(retries + 1):
+        try:
+            payload = json.dumps({'database': DB_ID, 'type': 'native', 'native': {'query': sql}}).encode()
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            req = urllib.request.Request(METABASE_URL, data=payload,
+                headers={'Content-Type': 'application/json', 'X-Api-Key': api_key}, method='POST')
+            resp = urllib.request.urlopen(req, context=ctx, timeout=600)
+            data = json.loads(resp.read())
+            status = data.get('status')
+            if status == 'failed':
+                print(f"  WARNING: Query failed: {data.get('error', 'unknown error')}")
+                return [], []
+            if 'data' not in data:
+                print(f"  WARNING: No data in response (status={status})")
+                return [], []
+            return [c['name'] for c in data['data']['cols']], data['data']['rows']
+        except Exception as e:
+            if attempt < retries:
+                print(f"  Retry {attempt+1}/{retries} after error: {e}")
+                time.sleep(5)
+            else:
+                raise
 
 def get_month_ranges(start_str):
     """Generate monthly date ranges from start_str to today."""
@@ -107,10 +116,13 @@ cohort_data.sort(key=lambda x: x['d'])
 print(f"  Total cohort rows: {len(cohort_data)}")
 
 # =====================================================================
-# QUERY 4: Language at each funnel step (from original 10 events)
+# QUERY 4: Language at each funnel step (monthly chunks)
 # =====================================================================
-print("Fetching language at each funnel step...")
-q4 = """SELECT EVENT_NAME,
+print("Fetching language at each funnel step (monthly chunks)...")
+lang_step_data = []
+for m_start, m_end in get_month_ranges(START_DATE):
+    print(f"  Chunk: {m_start} to {m_end}...")
+    q4 = f"""SELECT EVENT_NAME,
   COALESCE(NULLIF(TRY_PARSE_JSON(PROPERTIES):"event_props.language"::STRING,''), 'hi') as language,
   CAST(TIMESTAMP AS DATE) as event_date,
   COUNT(DISTINCT USER_ID) as unique_users
@@ -118,13 +130,12 @@ FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER
 WHERE EVENT_NAME IN ('App Installed','booking_homepage_loaded','serviceable_page_loaded',
 'unserviceable_page_loaded','how_does_it_work_clicked','how_to_get_started_clicked',
 'cost_today_clicked','pay_100_to_move_forward_clicked','choose_different_location_clicked')
-AND TIMESTAMP >= '2026-01-26'
+AND TIMESTAMP >= '{m_start}' AND TIMESTAMP < '{m_end}'
 GROUP BY EVENT_NAME, language, event_date ORDER BY event_date, EVENT_NAME"""
-_, lang_step_rows = run_query(q4)
-lang_step_data = []
-for r in lang_step_rows:
-    lang = r[1] if r[1] in ('hi', 'en') else 'hi'
-    lang_step_data.append({'e': r[0], 'l': lang, 'd': r[2][:10], 'u': r[3]})
+    _, rows = run_query(q4)
+    for r in rows:
+        lang = r[1] if r[1] in ('hi', 'en') else 'hi'
+        lang_step_data.append({'e': r[0], 'l': lang, 'd': r[2][:10], 'u': r[3]})
 # Merge duplicates after unknown->hi normalization
 lang_merged = {}
 for r in lang_step_data:
@@ -132,9 +143,10 @@ for r in lang_step_data:
     lang_merged[key] = lang_merged.get(key, 0) + r['u']
 lang_step_data = [{'e': k[0], 'l': k[1], 'd': k[2], 'u': v} for k, v in lang_merged.items()]
 
-# For booking_fee_captured: use language from pay_100 event
-print("Fetching booking_fee language from pay_100...")
-q4b = """SELECT
+# For booking_fee_captured: use language from pay_100 event (monthly chunks)
+print("Fetching booking_fee language from pay_100 (monthly chunks)...")
+for m_start, m_end in get_month_ranges(START_DATE):
+    q4b = f"""SELECT
   COALESCE(NULLIF(TRY_PARSE_JSON(c2.PROPERTIES):"event_props.language"::STRING,''), 'hi') as lang,
   CAST(c1.TIMESTAMP AS DATE) as event_date,
   COUNT(DISTINCT c1.USER_ID) as users
@@ -142,13 +154,13 @@ FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER c1
 INNER JOIN PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER c2
   ON c1.USER_ID = c2.USER_ID
   AND c2.EVENT_NAME = 'pay_100_to_move_forward_clicked'
-  AND c2.TIMESTAMP >= '2026-01-26'
-WHERE c1.EVENT_NAME = 'booking_fee_captured' AND c1.TIMESTAMP >= '2026-01-26'
+  AND c2.TIMESTAMP >= '{m_start}' AND c2.TIMESTAMP < '{m_end}'
+WHERE c1.EVENT_NAME = 'booking_fee_captured' AND c1.TIMESTAMP >= '{m_start}' AND c1.TIMESTAMP < '{m_end}'
 GROUP BY lang, event_date ORDER BY event_date"""
-_, fee_lang_rows = run_query(q4b)
-for r in fee_lang_rows:
-    lang = r[0] if r[0] in ('hi', 'en') else 'hi'
-    lang_step_data.append({'e': 'booking_fee_captured', 'l': lang, 'd': r[1][:10], 'u': r[2]})
+    _, fee_lang_rows = run_query(q4b)
+    for r in fee_lang_rows:
+        lang = r[0] if r[0] in ('hi', 'en') else 'hi'
+        lang_step_data.append({'e': 'booking_fee_captured', 'l': lang, 'd': r[1][:10], 'u': r[2]})
 
 # =====================================================================
 # QUERY 5: Distinct app versions (monthly chunks)
