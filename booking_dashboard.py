@@ -88,7 +88,7 @@ for m_start, m_end in get_month_ranges(START_DATE):
   FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER
   WHERE EVENT_NAME = 'App Installed' AND TIMESTAMP >= '{m_start}' AND TIMESTAMP < '{m_end}'
   AND TRY_PARSE_JSON(PROPERTIES):"event_props.ct_app_version"::STRING LIKE '2026_%'
-  AND TRY_PARSE_JSON(PROPERTIES):"profile.events.App Installed.count"::INT = 1
+  AND TRY_CAST(TRY_PARSE_JSON(PROPERTIES):"profile.events.App Installed.count"::STRING AS INT) = 1
 )
 SELECT ib.install_date,
   COUNT(DISTINCT ib.USER_ID) as installs,
@@ -172,7 +172,7 @@ for m_start, m_end in get_month_ranges(START_DATE):
 FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER
 WHERE EVENT_NAME = 'App Installed' AND TIMESTAMP >= '{m_start}' AND TIMESTAMP < '{m_end}'
 AND TRY_PARSE_JSON(PROPERTIES):"event_props.ct_app_version"::STRING LIKE '2026_%'
-AND TRY_PARSE_JSON(PROPERTIES):"profile.events.App Installed.count"::INT = 1
+AND TRY_CAST(TRY_PARSE_JSON(PROPERTIES):"profile.events.App Installed.count"::STRING AS INT) = 1
 ORDER BY app_version"""
     _, av_rows = run_query(q5)
     for r in av_rows:
@@ -195,7 +195,7 @@ try:
   FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER
   WHERE EVENT_NAME = 'App Installed' AND TIMESTAMP >= '{m_start}' AND TIMESTAMP < '{m_end}'
   AND TRY_PARSE_JSON(PROPERTIES):"event_props.ct_app_version"::STRING LIKE '2026_%'
-  AND TRY_PARSE_JSON(PROPERTIES):"profile.events.App Installed.count"::INT = 1
+  AND TRY_CAST(TRY_PARSE_JSON(PROPERTIES):"profile.events.App Installed.count"::STRING AS INT) = 1
 )
 SELECT ib.app_version,
   COUNT(DISTINCT ib.USER_ID) as installs,
@@ -246,7 +246,7 @@ try:
   FROM PROD_DB.PUBLIC.CLEVERTAP_CUSTOMER
   WHERE EVENT_NAME = 'App Installed' AND TIMESTAMP >= '{m_start}' AND TIMESTAMP < '{m_end}'
   AND TRY_PARSE_JSON(PROPERTIES):"event_props.ct_app_version"::STRING LIKE '2026_%'
-  AND TRY_PARSE_JSON(PROPERTIES):"profile.events.App Installed.count"::INT = 1
+  AND TRY_CAST(TRY_PARSE_JSON(PROPERTIES):"profile.events.App Installed.count"::STRING AS INT) = 1
 ),
 user_journey AS (
   SELECT ib.USER_ID, ib.install_date,
